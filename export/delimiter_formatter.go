@@ -35,8 +35,8 @@ func NewDelimiterFormatter(modelType reflect.Type, opts ...string) (*DelimiterFo
 	return &DelimiterFormatter{modelType: modelType, formatCols: formatCols, Delimiter: sep}, nil
 }
 
-func (f *DelimiterFormatter) Format(ctx context.Context, model interface{}) (string, error) {
-	return ToTextWithDelimiter(ctx, model, f.Delimiter, f.formatCols), nil
+func (f *DelimiterFormatter) Format(ctx context.Context, model interface{}) string {
+	return ToTextWithDelimiter(ctx, model, f.Delimiter, f.formatCols)
 }
 func ToTextWithDelimiter(ctx context.Context, model interface{}, delimiter string, formatCols map[int]string) string {
 	arr := make([]string, 0)
@@ -44,31 +44,34 @@ func ToTextWithDelimiter(ctx context.Context, model interface{}, delimiter strin
 	for i := 0; i < sumValue.NumField(); i++ {
 		format, ok := formatCols[i]
 		if ok {
-			value := fmt.Sprint(sumValue.Field(i).Interface())
-			if value == "" || value == "0" || value == "<nil>" {
+			field := sumValue.Field(i)
+			kind := field.Kind()
+			var value string
+			if kind == reflect.Ptr && field.IsNil() {
 				value = ""
 			} else {
-				value = fmt.Sprint(reflect.Indirect(sumValue.Field(i)).Interface())
-			}
-
-			if sumValue.Field(i).Type().String() == "string" {
-				if strings.Contains(value, delimiter) {
-					value = "\"" + value + "\""
-				} else {
-					if strings.Contains(value, `"`) {
-						value = strings.ReplaceAll(value, `"`, `\"`)
-					}
+				v := field.Interface()
+				if kind == reflect.Ptr {
+					v = reflect.Indirect(reflect.ValueOf(v)).Interface()
 				}
-			}
-			if len(format) > 0 {
-				if strings.Contains(format, "dateFormat:") {
-					layoutDateStr := strings.ReplaceAll(format, "dateFormat:", "")
-					fieldDate, err := time.Parse(DateLayout, value)
-					if err != nil {
-						fmt.Println("err", fmt.Sprintf("%v", err))
-						value = fmt.Sprintf("%v", fmt.Sprintf("%v", value))
+				d, okD := v.(*time.Time)
+				if okD {
+					if len(format) > 0 {
+						value = d.Format(format)
 					} else {
-						value = fmt.Sprintf("%v", fieldDate.UTC().Format(layoutDateStr))
+						value = d.Format(DateLayout)
+					}
+				} else {
+					s, okS := v.(string)
+					if okS {
+						if strings.Contains(s, delimiter) {
+							if strings.Contains(value, `"`) {
+								s = strings.ReplaceAll(s, `"`, `""`)
+							}
+							value = "\"" + s + "\""
+						}
+					} else {
+						value = fmt.Sprint(field.Interface())
 					}
 				}
 			}
@@ -88,10 +91,16 @@ func GetIndexesByTag(modelType reflect.Type, tagName string, skipTag string) (ma
 		skipValue := field.Tag.Get(skipTag)
 		if len(skipValue) > 0 {
 			if len(tagValue) > 0 {
+				if strings.Contains(tagValue, "dateFormat:") {
+					tagValue = strings.ReplaceAll(tagValue, "dateFormat:", "")
+				}
 				ma[i] = tagValue
 			}
 		} else {
 			if len(tagValue) > 0 {
+				if strings.Contains(tagValue, "dateFormat:") {
+					tagValue = strings.ReplaceAll(tagValue, "dateFormat:", "")
+				}
 				ma[i] = tagValue
 			} else {
 				ma[i] = ""

@@ -75,35 +75,61 @@ func ScanLineFixLength(line string, modelType reflect.Type, record interface{}, 
 			if end > size {
 				return errors.New(fmt.Sprintf("scanLineFixLength - exceed range max size . Field name = %v , line = %v ", field.Name, line))
 			}
-			value := line[start:end]
+			value := strings.TrimSpace(line[start:end])
 			f := s.Field(j)
 			if f.IsValid() {
 				if f.CanSet() {
 					typef := field.Type.String()
-					if f.Kind() == reflect.String {
-						stringValue := strings.TrimSpace(value)
-						f.SetString(stringValue)
-					} else if f.Kind() == reflect.Float64 {
+					switch typef {
+					case "string", "*string":
+						if f.Kind() == reflect.Ptr {
+							f.Set(reflect.ValueOf(&value))
+						} else {
+							f.SetString(value)
+						}
+					case "int64", "*int64":
+						value, _ := strconv.ParseInt(value, 10, 64)
+						if f.Kind() == reflect.Ptr {
+							f.Set(reflect.ValueOf(&value))
+						} else {
+							f.SetInt(value)
+						}
+					case "int", "*int":
+						value, _ := strconv.Atoi(value)
+						if f.Kind() == reflect.Ptr {
+							f.Set(reflect.ValueOf(&value))
+						} else {
+							f.Set(reflect.ValueOf(value))
+						}
+					case "bool", "*bool":
+						boolValue, _ := strconv.ParseBool(value)
+						if f.Kind() == reflect.Ptr {
+							f.Set(reflect.ValueOf(&boolValue))
+						} else {
+							f.SetBool(boolValue)
+						}
+					case "float64", "*float64":
 						floatValue, _ := strconv.ParseFloat(value, 64)
-						f.SetFloat(floatValue)
-					} else if f.Kind() == reflect.Int64 {
-						intValue, _ := strconv.ParseInt(value, 64, 0)
-						f.SetInt(intValue)
-					} else if f.Kind() == reflect.Bool {
-						stringValue := strings.TrimSpace(value)
-						boolValue, _ := strconv.ParseBool(stringValue)
-						f.SetBool(boolValue)
-					} else if typef == "*time.Time" || typef == "time.Time" {
-						if strings.Contains(format.Format, "dateFormat:") {
-							layoutDateStr := strings.ReplaceAll(format.Format, "dateFormat:", "")
-							fieldDate, err := time.Parse(layoutDateStr, value)
+						if f.Kind() == reflect.Ptr {
+							f.Set(reflect.ValueOf(&floatValue))
+						} else {
+							f.SetFloat(floatValue)
+						}
+					case "time.Time", "*time.Time":
+						if format, ok := formatCols[j]; ok {
+							var fieldDate time.Time
+							var err error
+							if len(format.Format) > 0 {
+							} else {
+								fieldDate, err = time.Parse(DateLayout, line)
+							}
 							if err != nil {
 								return err
 							}
 							if f.Kind() == reflect.Ptr {
 								f.Set(reflect.ValueOf(&fieldDate))
 							} else {
-								f.Set(reflect.Indirect(reflect.ValueOf(fieldDate)))
+								f.Set(reflect.ValueOf(fieldDate))
 							}
 						}
 					}

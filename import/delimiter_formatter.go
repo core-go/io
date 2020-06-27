@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+const (
+	DateLayout string = "2006-01-02 15:04:05 +0700 +07"
+)
+
 func GetIndexesByTag(modelType reflect.Type, tagName string) (map[int]string, error) {
 	ma := make(map[int]string, 0)
 	if modelType.Kind() != reflect.Struct {
@@ -18,6 +22,9 @@ func GetIndexesByTag(modelType reflect.Type, tagName string) (map[int]string, er
 		field := modelType.Field(i)
 		tagValue := field.Tag.Get(tagName)
 		if len(tagValue) > 0 {
+			if strings.Contains(tagValue, "dateFormat:") {
+				tagValue = strings.ReplaceAll(tagValue, "dateFormat:", "")
+			}
 			ma[i] = tagValue
 		} else {
 			ma[i] = ""
@@ -80,7 +87,7 @@ func ScanLine(lines []string, modelType reflect.Type, record interface{}, format
 				} else {
 					f.Set(reflect.ValueOf(value))
 				}
-			case "bool":
+			case "bool", "*bool":
 				boolValue, _ := strconv.ParseBool(line)
 				if f.Kind() == reflect.Ptr {
 					f.Set(reflect.ValueOf(&boolValue))
@@ -96,17 +103,20 @@ func ScanLine(lines []string, modelType reflect.Type, record interface{}, format
 				}
 			case "time.Time", "*time.Time":
 				if format, ok := formatCols[i]; ok {
-					if strings.Contains(format, "dateFormat:") {
-						layoutDateStr := strings.ReplaceAll(format, "dateFormat:", "")
-						fieldDate, err := time.Parse(layoutDateStr, line)
-						if err != nil {
-							return err
-						}
-						if f.Kind() == reflect.Ptr {
-							f.Set(reflect.ValueOf(&fieldDate))
-						} else {
-							f.Set(reflect.ValueOf(fieldDate))
-						}
+					var fieldDate time.Time
+					var err error
+					if len(format) > 0 {
+						fieldDate, err = time.Parse(format, line)
+					} else {
+						fieldDate, err = time.Parse(DateLayout, line)
+					}
+					if err != nil {
+						return err
+					}
+					if f.Kind() == reflect.Ptr {
+						f.Set(reflect.ValueOf(&fieldDate))
+					} else {
+						f.Set(reflect.ValueOf(fieldDate))
 					}
 				}
 			}

@@ -34,6 +34,9 @@ func GetIndexes(modelType reflect.Type, tagName string) (map[int]*FixedLength, e
 			}
 			v := &FixedLength{Length: length}
 			if len(tagValue) > 0 {
+				if strings.Contains(tagValue, "dateFormat:") {
+					tagValue = strings.ReplaceAll(tagValue, "dateFormat:", "")
+				}
 				v.Format = tagValue
 			}
 			ma[i] = v
@@ -50,8 +53,8 @@ func NewFixedLengthFormatter(modelType reflect.Type) (*FixedLengthFormatter, err
 	return &FixedLengthFormatter{modelType: modelType, formatCols: formatCols}, nil
 }
 
-func (f *FixedLengthFormatter) Format(ctx context.Context, model interface{}) (string, error) {
-	return ToFixedLength(model, f.formatCols), nil
+func (f *FixedLengthFormatter) Format(ctx context.Context, model interface{}) string {
+	return ToFixedLength(model, f.formatCols)
 }
 func ToFixedLength(model interface{}, formatCols map[int]*FixedLength) string {
 	arr := make([]string, 0)
@@ -59,26 +62,29 @@ func ToFixedLength(model interface{}, formatCols map[int]*FixedLength) string {
 	for i := 0; i < sumValue.NumField(); i++ {
 		format, ok := formatCols[i]
 		if ok {
-			value := fmt.Sprint(sumValue.Field(i).Interface())
-			if value == "" || value == "0" || value == "<nil>" {
-				value = ""
-			} else if len(format.Format) > 0 && strings.Contains(format.Format, "dateFormat:") {
-				layoutDateStr := strings.ReplaceAll(format.Format, "dateFormat:", "")
-				fieldDate, err := time.Parse(DateLayout, value)
-				if err != nil {
-					fmt.Println("err", fmt.Sprintf("%v", err))
-					value = fmt.Sprintf("%v", fmt.Sprintf("%v", value))
-				} else {
-					value = fmt.Sprintf("%v", fieldDate.UTC().Format(layoutDateStr))
-				}
-			} else {
-				if len(value) > format.Length {
-					value = strings.TrimSpace(value)
-				}
-				if len(format.Format) > 0 {
-					value = fmt.Sprintf(format.Format, value)
-				}
+			field := sumValue.Field(i)
+			kind := field.Kind()
+			var value string
+			if kind == reflect.Ptr && field.IsNil() {
 				value = FixedLengthString(format.Length, value)
+			} else {
+				v := field.Interface()
+				if kind == reflect.Ptr {
+					v = reflect.Indirect(reflect.ValueOf(v)).Interface()
+				}
+				d, okD := v.(*time.Time)
+				if okD {
+					value = d.Format(format.Format)
+				} else {
+					value = fmt.Sprint(v)
+					if len(value) > format.Length {
+						value = strings.TrimSpace(value)
+					}
+					if len(format.Format) > 0 {
+						value = fmt.Sprintf(format.Format, value)
+					}
+					value = FixedLengthString(format.Length, value)
+				}
 			}
 			arr = append(arr, value)
 		}
