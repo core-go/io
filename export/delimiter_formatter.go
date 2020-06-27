@@ -118,6 +118,13 @@ func GetIndexesByTag(modelType reflect.Type, tagName string, skipTag string) (ma
 		tagValue := field.Tag.Get(tagName)
 		skipValue := field.Tag.Get(skipTag)
 		v := Delimiter{}
+		tagScale, sOk := field.Tag.Lookup("scale")
+		if sOk {
+			scale, err := strconv.Atoi(tagScale)
+			if err == nil {
+				v.Scale = scale
+			}
+		}
 		if len(skipValue) > 0 {
 			if len(tagValue) > 0 {
 				if strings.Contains(tagValue, "dateFormat:") {
@@ -131,7 +138,7 @@ func GetIndexesByTag(modelType reflect.Type, tagName string, skipTag string) (ma
 				if strings.Contains(tagValue, "dateFormat:") {
 					tagValue = strings.ReplaceAll(tagValue, "dateFormat:", "")
 					v.Format = tagValue
-				} else if strings.Contains(tagValue, "scale:") {
+				} else if sOk == false && strings.Contains(tagValue, "scale:") {
 					tagValue = strings.ReplaceAll(tagValue, "scale:", "")
 					scale, err1 := strconv.Atoi(tagValue)
 					if err1 != nil {
