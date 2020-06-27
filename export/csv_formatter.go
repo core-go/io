@@ -36,10 +36,13 @@ func NewDelimiterFormatter(modelType reflect.Type, opts ...string) *DelimiterFor
 }
 
 func (f *DelimiterFormatter) Format(ctx context.Context, model interface{}) (string, error) {
+	return ToTextWithDelimiter(ctx, model, f.Delimiter, f.formatCols)
+}
+func ToTextWithDelimiter(ctx context.Context, model interface{}, delimiter string, formatCols map[int]string) (string, error) {
 	arr := make([]string, 0)
 	sumValue := reflect.Indirect(reflect.ValueOf(model))
 	for i := 0; i < sumValue.NumField(); i++ {
-		format, ok := f.formatCols[i]
+		format, ok := formatCols[i]
 		if ok {
 			value := fmt.Sprint(sumValue.Field(i).Interface())
 			if value == "" || value == "0" || value == "<nil>" {
@@ -49,7 +52,7 @@ func (f *DelimiterFormatter) Format(ctx context.Context, model interface{}) (str
 			}
 
 			if sumValue.Field(i).Type().String() == "string" {
-				if strings.Contains(value, f.Delimiter) {
+				if strings.Contains(value, delimiter) {
 					value = "\"" + value + "\""
 				} else {
 					if strings.Contains(value, `"`) {
@@ -72,9 +75,8 @@ func (f *DelimiterFormatter) Format(ctx context.Context, model interface{}) (str
 			arr = append(arr, value)
 		}
 	}
-	return strings.Join(arr, f.Delimiter) + "\n", nil
+	return strings.Join(arr, delimiter) + "\n", nil
 }
-
 func GetIndexesByTag(modelType reflect.Type, tagName string, skipTag string) (map[int]string, error) {
 	ma := make(map[int]string, 0)
 	if modelType.Kind() != reflect.Struct {

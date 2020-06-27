@@ -68,7 +68,6 @@ func (f *FixedLengthFormatter) Format(ctx context.Context, model interface{}) (s
 	}
 	return strings.Join(arr, f.sep) + "\n", nil
 }
-
 func FixedLengthString(length int, str string) string {
 	verb := fmt.Sprintf("%%%d.%ds", length, length)
 	return fmt.Sprintf(verb, str)

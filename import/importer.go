@@ -6,6 +6,7 @@ import (
 	"io"
 	"reflect"
 )
+
 func NewImportRepository(db *sql.DB, modelType reflect.Type,
 	transform func(ctx context.Context, lines []string) (interface{}, error),
 	write func(ctx context.Context, data interface{}, endLineFlag bool) error,

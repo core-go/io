@@ -1,7 +1,6 @@
 package export
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"reflect"
@@ -84,13 +83,10 @@ func (s *Exporter) ScanAndWrite(ctx context.Context, rows *sql.Rows, structType 
 }
 
 func (s *Exporter) TransformAndWrite(ctx context.Context, write func(p []byte) (n int, err error), model interface{}) error {
-	var buffer bytes.Buffer
 	line, err := s.Transform(ctx, model)
 	if err != nil {
 		return err
 	}
-	buffer.WriteString(line)
-
-	_, err0 := write(buffer.Bytes())
-	return err0
+	_, er := write([]byte(line))
+	return er
 }

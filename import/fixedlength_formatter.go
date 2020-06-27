@@ -23,7 +23,7 @@ type FixedLengthFormatter struct {
 	formatCols map[int]string
 }
 
-func (f FixedLengthFormatter) StringToStruct(ctx context.Context, lines []string) (interface{}, error) {
+func (f FixedLengthFormatter) ToStruct(ctx context.Context, lines []string) (interface{}, error) {
 	line := strings.Join(lines, ``)
 	record := reflect.New(f.modelType).Interface()
 	err := ScanLineFixLength(line, f.modelType, record, f.formatCols)
