@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"reflect"
 	"strconv"
 	"strings"
@@ -16,8 +17,10 @@ type FixedLengthFormatter struct {
 }
 type FixedLength struct {
 	Format string
+	Scale  int
 	Length int
 }
+
 func GetIndexes(modelType reflect.Type, tagName string) (map[int]*FixedLength, error) {
 	ma := make(map[int]*FixedLength, 0)
 	if modelType.Kind() != reflect.Struct {
@@ -36,6 +39,13 @@ func GetIndexes(modelType reflect.Type, tagName string) (map[int]*FixedLength, e
 			if len(tagValue) > 0 {
 				if strings.Contains(tagValue, "dateFormat:") {
 					tagValue = strings.ReplaceAll(tagValue, "dateFormat:", "")
+				} else if strings.Contains(tagValue, "scale:") {
+					tagValue = strings.ReplaceAll(tagValue, "scale:", "")
+					scale, err1 := strconv.Atoi(tagValue)
+					if err1 != nil {
+						return ma, err1
+					}
+					v.Scale = scale
 				}
 				v.Format = tagValue
 			}
@@ -71,20 +81,43 @@ func ToFixedLength(model interface{}, formatCols map[int]*FixedLength) string {
 				v := field.Interface()
 				if kind == reflect.Ptr {
 					v = reflect.Indirect(reflect.ValueOf(v)).Interface()
+					kind = field.Elem().Kind()
 				}
-				d, okD := v.(*time.Time)
-				if okD {
+
+				if d, okD := v.(time.Time); okD {
 					value = d.Format(format.Format)
-				} else {
-					value = fmt.Sprint(v)
-					if len(value) > format.Length {
-						value = strings.TrimSpace(value)
+				} else {   
+					if kind == reflect.Struct {
+						if v2 := reflect.Indirect(reflect.ValueOf(v)); v2.NumField() == 1 {
+							f := v2.Field(0)
+							fv := f.Interface()
+							k := f.Kind()
+							if k == reflect.Ptr {
+								fv = reflect.Indirect(reflect.ValueOf(fv)).Interface()
+							}
+							if sv, ok := fv.(big.Float); ok {
+								prec := 2
+								if f, err := strconv.Atoi(format.Format); err == nil {
+									prec = f
+								}
+								value = sv.Text('f', prec)
+							} else if svi, ok := fv.(big.Int); ok {
+								value = svi.Text(10)
+							} else {
+								value = fmt.Sprint(v)
+							}
+						}
+					}else{
+						value = fmt.Sprint(v)
+						if len(value) > format.Length {
+							value = strings.TrimSpace(value)
+						}
+						if len(format.Format) > 0 {
+							value = fmt.Sprintf(format.Format, value)
+						}
 					}
-					if len(format.Format) > 0 {
-						value = fmt.Sprintf(format.Format, value)
-					}
-					value = FixedLengthString(format.Length, value)
 				}
+				value = FixedLengthString(format.Length, value)
 			}
 			arr = append(arr, value)
 		}
