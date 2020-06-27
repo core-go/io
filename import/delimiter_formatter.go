@@ -25,20 +25,20 @@ func GetIndexesByTag(modelType reflect.Type, tagName string) (map[int]string, er
 	}
 	return ma, nil
 }
-func NewCSVFormatter(modelType reflect.Type) (*CSVFormatter, error) {
+func NewDelimiterFormatter(modelType reflect.Type) (*DelimiterFormatter, error) {
 	formatCols, err := GetIndexesByTag(modelType, "format")
 	if err != nil {
 		return nil, err
 	}
-	return &CSVFormatter{modelType: modelType, formatCols: formatCols}, nil
+	return &DelimiterFormatter{modelType: modelType, formatCols: formatCols}, nil
 }
 
-type CSVFormatter struct {
+type DelimiterFormatter struct {
 	modelType  reflect.Type
 	formatCols map[int]string
 }
 
-func (f CSVFormatter) ToStruct(ctx context.Context, lines []string) (interface{}, error) {
+func (f DelimiterFormatter) ToStruct(ctx context.Context, lines []string) (interface{}, error) {
 	record := reflect.New(f.modelType).Interface()
 	err := ScanLine(lines, f.modelType, &record, f.formatCols)
 	if err != nil {
