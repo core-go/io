@@ -25,12 +25,12 @@ func GetIndexesByTag(modelType reflect.Type, tagName string) (map[int]string, er
 	}
 	return ma, nil
 }
-func NewCSVFormatter(modelType reflect.Type) *CSVFormatter {
+func NewCSVFormatter(modelType reflect.Type) (*CSVFormatter, error) {
 	formatCols, err := GetIndexesByTag(modelType, "format")
 	if err != nil {
-		panic("error get formatCols")
+		return nil, err
 	}
-	return &CSVFormatter{modelType: modelType, formatCols: formatCols}
+	return &CSVFormatter{modelType: modelType, formatCols: formatCols}, nil
 }
 
 type CSVFormatter struct {

@@ -19,7 +19,7 @@ type DelimiterFormatter struct {
 	formatCols map[int]string
 }
 
-func NewDelimiterFormatter(modelType reflect.Type, opts ...string) *DelimiterFormatter {
+func NewDelimiterFormatter(modelType reflect.Type, opts ...string) (*DelimiterFormatter, error) {
 	sep := ","
 	if len(opts) > 0 && len(opts[0]) > 0 {
 		sep = opts[0]
@@ -30,15 +30,15 @@ func NewDelimiterFormatter(modelType reflect.Type, opts ...string) *DelimiterFor
 	}
 	formatCols, err := GetIndexesByTag(modelType, "format", skipTag)
 	if err != nil {
-		panic("error get formatCols")
+		return nil, err
 	}
-	return &DelimiterFormatter{modelType: modelType, formatCols: formatCols, Delimiter: sep}
+	return &DelimiterFormatter{modelType: modelType, formatCols: formatCols, Delimiter: sep}, nil
 }
 
 func (f *DelimiterFormatter) Format(ctx context.Context, model interface{}) (string, error) {
-	return ToTextWithDelimiter(ctx, model, f.Delimiter, f.formatCols)
+	return ToTextWithDelimiter(ctx, model, f.Delimiter, f.formatCols), nil
 }
-func ToTextWithDelimiter(ctx context.Context, model interface{}, delimiter string, formatCols map[int]string) (string, error) {
+func ToTextWithDelimiter(ctx context.Context, model interface{}, delimiter string, formatCols map[int]string) string {
 	arr := make([]string, 0)
 	sumValue := reflect.Indirect(reflect.ValueOf(model))
 	for i := 0; i < sumValue.NumField(); i++ {
@@ -75,7 +75,7 @@ func ToTextWithDelimiter(ctx context.Context, model interface{}, delimiter strin
 			arr = append(arr, value)
 		}
 	}
-	return strings.Join(arr, delimiter) + "\n", nil
+	return strings.Join(arr, delimiter) + "\n"
 }
 func GetIndexesByTag(modelType reflect.Type, tagName string, skipTag string) (map[int]string, error) {
 	ma := make(map[int]string, 0)

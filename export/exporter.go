@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"reflect"
 )
+
 func NewExportRepository(db *sql.DB, modelType reflect.Type,
 	buildQuery func(context.Context) (string, []interface{}),
 	transform func(context.Context, interface{}) (string, error),
 	write func(p []byte) (n int, err error),
 	close func() error,
-) *Exporter {
+) (*Exporter, error) {
 	return NewExporter(db, modelType, buildQuery, transform, write, close)
 }
 func NewExportAdapter(db *sql.DB, modelType reflect.Type,
@@ -18,7 +19,7 @@ func NewExportAdapter(db *sql.DB, modelType reflect.Type,
 	transform func(context.Context, interface{}) (string, error),
 	write func(p []byte) (n int, err error),
 	close func() error,
-) *Exporter {
+) (*Exporter, error) {
 	return NewExporter(db, modelType, buildQuery, transform, write, close)
 }
 func NewExportService(db *sql.DB, modelType reflect.Type,
@@ -26,7 +27,7 @@ func NewExportService(db *sql.DB, modelType reflect.Type,
 	transform func(context.Context, interface{}) (string, error),
 	write func(p []byte) (n int, err error),
 	close func() error,
-) *Exporter {
+) (*Exporter, error) {
 	return NewExporter(db, modelType, buildQuery, transform, write, close)
 }
 
@@ -35,13 +36,13 @@ func NewExporter(db *sql.DB, modelType reflect.Type,
 	transform func(context.Context, interface{}) (string, error),
 	write func(p []byte) (n int, err error),
 	close func() error,
-) *Exporter {
+) (*Exporter, error) {
 	fieldsIndex, err := GetColumnIndexes(modelType)
 	if err != nil {
-		panic("error get fieldsIndex")
+		return nil, err
 	}
 	columns := GetColumnsSelect(modelType)
-	return &Exporter{DB: db, modelType: modelType, Write: write, Close: close, columns: columns, fieldsIndex: fieldsIndex, Transform: transform, BuildQuery: buildQuery}
+	return &Exporter{DB: db, modelType: modelType, Write: write, Close: close, columns: columns, fieldsIndex: fieldsIndex, Transform: transform, BuildQuery: buildQuery}, nil
 }
 
 type Exporter struct {

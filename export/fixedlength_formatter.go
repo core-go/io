@@ -42,18 +42,18 @@ func GetIndexes(modelType reflect.Type, tagName string) (map[int]*FixedLength, e
 	return ma, nil
 }
 
-func NewFixedLengthFormatter(modelType reflect.Type) *FixedLengthFormatter {
+func NewFixedLengthFormatter(modelType reflect.Type) (*FixedLengthFormatter, error) {
 	formatCols, err := GetIndexes(modelType, "format")
 	if err != nil {
-		panic("error get formatCols")
+		return nil, err
 	}
-	return &FixedLengthFormatter{modelType: modelType, formatCols: formatCols}
+	return &FixedLengthFormatter{modelType: modelType, formatCols: formatCols}, nil
 }
 
 func (f *FixedLengthFormatter) Format(ctx context.Context, model interface{}) (string, error) {
-	return ToFixedLength(model, f.formatCols)
+	return ToFixedLength(model, f.formatCols), nil
 }
-func ToFixedLength(model interface{}, formatCols map[int]*FixedLength) (string, error) {
+func ToFixedLength(model interface{}, formatCols map[int]*FixedLength) string {
 	arr := make([]string, 0)
 	sumValue := reflect.Indirect(reflect.ValueOf(model))
 	for i := 0; i < sumValue.NumField(); i++ {
@@ -83,7 +83,7 @@ func ToFixedLength(model interface{}, formatCols map[int]*FixedLength) (string, 
 			arr = append(arr, value)
 		}
 	}
-	return strings.Join(arr, "") + "\n", nil
+	return strings.Join(arr, "") + "\n"
 }
 func FixedLengthString(length int, str string) string {
 	verb := fmt.Sprintf("%%%d.%ds", length, length)
