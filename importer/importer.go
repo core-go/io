@@ -1,14 +1,15 @@
 package importer
 
 import (
+	"context"
 	"database/sql"
 	"io"
 	"reflect"
 )
 
 func NewImporter(db *sql.DB, modelType reflect.Type,
-	transform func(lines []string) (interface{}, error),
-	write func(data interface{}, endLineFlag bool) error,
+	transform func(ctx context.Context, lines []string) (interface{}, error),
+	write func(ctx context.Context, data interface{}, endLineFlag bool) error,
 	read func(next func(lines []string, err error) error) error,
 ) *Importer {
 	return &Importer{DB: db, modelType: modelType, Transform: transform, Write: write, Read: read}
@@ -17,22 +18,22 @@ func NewImporter(db *sql.DB, modelType reflect.Type,
 type Importer struct {
 	DB        *sql.DB
 	modelType reflect.Type
-	Transform func(lines []string) (interface{}, error)
+	Transform func(ctx context.Context, lines []string) (interface{}, error)
 	Read      func(next func(lines []string, err error) error) error
-	Write     func(data interface{}, endLineFlag bool) error
+	Write     func(ctx context.Context, data interface{}, endLineFlag bool) error
 }
 
-func (s *Importer) Import() (err error) {
+func (s *Importer) Import(ctx context.Context) (err error) {
 	err = s.Read(func(lines []string, err error) error {
 		if err == io.EOF {
-			err = s.Write(nil, true)
+			err = s.Write(ctx, nil, true)
 			return nil
 		}
-		itemStruct, err := s.Transform(lines)
+		itemStruct, err := s.Transform(ctx, lines)
 		if err != nil {
 			return err
 		}
-		err = s.Write(itemStruct, false)
+		err = s.Write(ctx, itemStruct, false)
 		if err != nil {
 			return err
 		}

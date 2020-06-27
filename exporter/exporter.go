@@ -2,13 +2,14 @@ package exporter
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"reflect"
 )
 
 func NewExporter(db *sql.DB, modelType reflect.Type,
-	buildQuery func() (string, []interface{}),
-	transform func(model interface{}) (string, error),
+	buildQuery func(context.Context) (string, []interface{}),
+	transform func(context.Context, interface{}) (string, error),
 	write func(p []byte) (n int, err error),
 	close func() error,
 ) *Exporter {
@@ -25,22 +26,22 @@ type Exporter struct {
 	modelType   reflect.Type
 	fieldsIndex map[string]int
 	columns     []string
-	Transform   func(model interface{}) (string, error)
-	BuildQuery  func() (string, []interface{})
+	Transform   func(context.Context, interface{}) (string, error)
+	BuildQuery  func(context.Context) (string, []interface{})
 	Write       func(p []byte) (n int, err error)
 	Close       func() error
 }
 
-func (s *Exporter) Export() error {
-	query, p := s.BuildQuery()
-	rows, err := s.DB.Query(query, p...)
+func (s *Exporter) Export(ctx context.Context) error {
+	query, p := s.BuildQuery(ctx)
+	rows, err := s.DB.QueryContext(ctx, query, p...)
 	if err != nil {
 		return err
 	}
-	return s.ScanAndWrite(rows, s.modelType)
+	return s.ScanAndWrite(ctx, rows, s.modelType)
 }
 
-func (s *Exporter) ScanAndWrite(rows *sql.Rows, structType reflect.Type) error {
+func (s *Exporter) ScanAndWrite(ctx context.Context, rows *sql.Rows, structType reflect.Type) error {
 	defer s.Close()
 
 	for rows.Next() {
@@ -50,7 +51,7 @@ func (s *Exporter) ScanAndWrite(rows *sql.Rows, structType reflect.Type) error {
 			return err
 		}
 		SwapValuesToBool(initModel, &swapValues)
-		err1 := s.TransformAndWrite(s.Write, initModel)
+		err1 := s.TransformAndWrite(ctx, s.Write, initModel)
 		if err1 != nil {
 			return err1
 		}
@@ -58,9 +59,9 @@ func (s *Exporter) ScanAndWrite(rows *sql.Rows, structType reflect.Type) error {
 	return nil
 }
 
-func (s *Exporter) TransformAndWrite(write func(p []byte) (n int, err error), model interface{}) error {
+func (s *Exporter) TransformAndWrite(ctx context.Context, write func(p []byte) (n int, err error), model interface{}) error {
 	var buffer bytes.Buffer
-	line, err := s.Transform(model)
+	line, err := s.Transform(ctx, model)
 	if err != nil {
 		return err
 	}
