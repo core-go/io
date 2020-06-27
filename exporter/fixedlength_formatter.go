@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -22,7 +23,7 @@ func NewFixedLengthFormatWriter(modelType reflect.Type, sep string) *FixedLength
 	return &FixedLengthFormatter{modelType: modelType, formatCols: formatCols, sep: sep}
 }
 
-func (f *FixedLengthFormatter) Format(model interface{}) (string, error) {
+func (f *FixedLengthFormatter) Format(ctx context.Context, model interface{}) (string, error) {
 	arr := make([]string, 0)
 	sumValue := reflect.Indirect(reflect.ValueOf(model))
 	for i := 0; i < sumValue.NumField(); i++ {

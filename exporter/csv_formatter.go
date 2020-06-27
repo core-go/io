@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -30,7 +31,7 @@ func NewDelimiterFormatter(modelType reflect.Type, opts ...string) *DelimiterFor
 	return &DelimiterFormatter{modelType: modelType, formatCols: formatCols, Delimiter: sep}
 }
 
-func (f *DelimiterFormatter) Format(model interface{}) (string, error) {
+func (f *DelimiterFormatter) Format(ctx context.Context, model interface{}) (string, error) {
 	arr := make([]string, 0)
 	sumValue := reflect.Indirect(reflect.ValueOf(model))
 	for i := 0; i < sumValue.NumField(); i++ {

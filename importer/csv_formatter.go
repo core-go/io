@@ -1,6 +1,7 @@
 package importer
 
 import (
+	"context"
 	"errors"
 	"reflect"
 	"strconv"
@@ -37,7 +38,7 @@ type CSVFormatter struct {
 	formatCols map[int]string
 }
 
-func (f CSVFormatter) CSVToStruct(lines []string) (interface{}, error) {
+func (f CSVFormatter) CSVToStruct(ctx context.Context, lines []string) (interface{}, error) {
 	record := reflect.New(f.modelType).Interface()
 	err := ScanLine(lines, f.modelType, &record, f.formatCols)
 	if err != nil {
