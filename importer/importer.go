@@ -1,4 +1,4 @@
-package importer
+package impt
 
 import (
 	"context"
@@ -6,7 +6,27 @@ import (
 	"io"
 	"reflect"
 )
-
+func NewImportRepository(db *sql.DB, modelType reflect.Type,
+	transform func(ctx context.Context, lines []string) (interface{}, error),
+	write func(ctx context.Context, data interface{}, endLineFlag bool) error,
+	read func(next func(lines []string, err error) error) error,
+) *Importer {
+	return NewImporter(db, modelType, transform, write, read)
+}
+func NewImportAdapter(db *sql.DB, modelType reflect.Type,
+	transform func(ctx context.Context, lines []string) (interface{}, error),
+	write func(ctx context.Context, data interface{}, endLineFlag bool) error,
+	read func(next func(lines []string, err error) error) error,
+) *Importer {
+	return NewImporter(db, modelType, transform, write, read)
+}
+func NewImportService(db *sql.DB, modelType reflect.Type,
+	transform func(ctx context.Context, lines []string) (interface{}, error),
+	write func(ctx context.Context, data interface{}, endLineFlag bool) error,
+	read func(next func(lines []string, err error) error) error,
+) *Importer {
+	return NewImporter(db, modelType, transform, write, read)
+}
 func NewImporter(db *sql.DB, modelType reflect.Type,
 	transform func(ctx context.Context, lines []string) (interface{}, error),
 	write func(ctx context.Context, data interface{}, endLineFlag bool) error,

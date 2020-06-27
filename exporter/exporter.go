@@ -1,4 +1,4 @@
-package exporter
+package export
 
 import (
 	"bytes"
@@ -6,6 +6,30 @@ import (
 	"database/sql"
 	"reflect"
 )
+func NewExportRepository(db *sql.DB, modelType reflect.Type,
+	buildQuery func(context.Context) (string, []interface{}),
+	transform func(context.Context, interface{}) (string, error),
+	write func(p []byte) (n int, err error),
+	close func() error,
+) *Exporter {
+	return NewExporter(db, modelType, buildQuery, transform, write, close)
+}
+func NewExportAdapter(db *sql.DB, modelType reflect.Type,
+	buildQuery func(context.Context) (string, []interface{}),
+	transform func(context.Context, interface{}) (string, error),
+	write func(p []byte) (n int, err error),
+	close func() error,
+) *Exporter {
+	return NewExporter(db, modelType, buildQuery, transform, write, close)
+}
+func NewExportService(db *sql.DB, modelType reflect.Type,
+	buildQuery func(context.Context) (string, []interface{}),
+	transform func(context.Context, interface{}) (string, error),
+	write func(p []byte) (n int, err error),
+	close func() error,
+) *Exporter {
+	return NewExporter(db, modelType, buildQuery, transform, write, close)
+}
 
 func NewExporter(db *sql.DB, modelType reflect.Type,
 	buildQuery func(context.Context) (string, []interface{}),

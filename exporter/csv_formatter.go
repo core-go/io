@@ -1,4 +1,4 @@
-package exporter
+package export
 
 import (
 	"context"
@@ -24,7 +24,11 @@ func NewDelimiterFormatter(modelType reflect.Type, opts ...string) *DelimiterFor
 	if len(opts) > 0 && len(opts[0]) > 0 {
 		sep = opts[0]
 	}
-	formatCols, err := GetIndexesByTag(modelType, "format")
+	skipTag := ""
+	if len(opts) > 1 && len(opts[1]) > 0 {
+		skipTag = opts[1]
+	}
+	formatCols, err := GetIndexesByTag(modelType, "format", skipTag)
 	if err != nil {
 		panic("error get formatCols")
 	}
@@ -35,41 +39,43 @@ func (f *DelimiterFormatter) Format(ctx context.Context, model interface{}) (str
 	arr := make([]string, 0)
 	sumValue := reflect.Indirect(reflect.ValueOf(model))
 	for i := 0; i < sumValue.NumField(); i++ {
-		value := fmt.Sprint(sumValue.Field(i).Interface())
-		if value == "" || value == "0" || value == "<nil>" {
-			value = ""
-		} else {
-			value = fmt.Sprint(reflect.Indirect(sumValue.Field(i)).Interface())
-		}
-
-		if sumValue.Field(i).Type().String() == "string" {
-			if strings.Contains(value, f.Delimiter) {
-				value = "\"" + value + "\""
+		format, ok := f.formatCols[i]
+		if ok {
+			value := fmt.Sprint(sumValue.Field(i).Interface())
+			if value == "" || value == "0" || value == "<nil>" {
+				value = ""
 			} else {
-				if strings.Contains(value, `"`) {
-					value = strings.ReplaceAll(value, `"`, `\"`)
-				}
+				value = fmt.Sprint(reflect.Indirect(sumValue.Field(i)).Interface())
 			}
-		}
 
-		if format, _ := f.formatCols[i]; len(format) > 0 {
-			if strings.Contains(format, "dateFormat:") {
-				layoutDateStr := strings.ReplaceAll(format, "dateFormat:", "")
-				fieldDate, err := time.Parse(DateLayout, value)
-				if err != nil {
-					fmt.Println("err", fmt.Sprintf("%v", err))
-					value = fmt.Sprintf("%v", fmt.Sprintf("%v", value))
+			if sumValue.Field(i).Type().String() == "string" {
+				if strings.Contains(value, f.Delimiter) {
+					value = "\"" + value + "\""
 				} else {
-					value = fmt.Sprintf("%v", fieldDate.UTC().Format(layoutDateStr))
+					if strings.Contains(value, `"`) {
+						value = strings.ReplaceAll(value, `"`, `\"`)
+					}
 				}
 			}
+			if len(format) > 0 {
+				if strings.Contains(format, "dateFormat:") {
+					layoutDateStr := strings.ReplaceAll(format, "dateFormat:", "")
+					fieldDate, err := time.Parse(DateLayout, value)
+					if err != nil {
+						fmt.Println("err", fmt.Sprintf("%v", err))
+						value = fmt.Sprintf("%v", fmt.Sprintf("%v", value))
+					} else {
+						value = fmt.Sprintf("%v", fieldDate.UTC().Format(layoutDateStr))
+					}
+				}
+			}
+			arr = append(arr, value)
 		}
-		arr = append(arr, value)
 	}
 	return strings.Join(arr, f.Delimiter) + "\n", nil
 }
 
-func GetIndexesByTag(modelType reflect.Type, tagName string) (map[int]string, error) {
+func GetIndexesByTag(modelType reflect.Type, tagName string, skipTag string) (map[int]string, error) {
 	ma := make(map[int]string, 0)
 	if modelType.Kind() != reflect.Struct {
 		return ma, errors.New("bad type")
@@ -77,10 +83,17 @@ func GetIndexesByTag(modelType reflect.Type, tagName string) (map[int]string, er
 	for i := 0; i < modelType.NumField(); i++ {
 		field := modelType.Field(i)
 		tagValue := field.Tag.Get(tagName)
-		if len(tagValue) > 0 {
-			ma[i] = tagValue
+		skipValue := field.Tag.Get(skipTag)
+		if len(skipValue) > 0 {
+			if len(tagValue) > 0 {
+				ma[i] = tagValue
+			}
 		} else {
-			ma[i] = ""
+			if len(tagValue) > 0 {
+				ma[i] = tagValue
+			} else {
+				ma[i] = ""
+			}
 		}
 	}
 	return ma, nil
