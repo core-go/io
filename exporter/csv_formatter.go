@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -8,118 +9,78 @@ import (
 )
 
 const (
-	layoutDate string = "2006-01-02 15:04:05 +0700 +07"
-	layout     string = "2006-01-02T15:04:05"
+	DateLayout string = "2006-01-02 15:04:05 +0700 +07"
 )
 
-func BuildCsv(rows []string, fields []string, valueOfmodels reflect.Value, embedFieldName string) []string {
-	if lengthResult := valueOfmodels.Len(); lengthResult > 0 {
-		model := valueOfmodels.Index(0).Interface()
-
-		firstLayerIndexes, secondLayerIndexes := findIndexByTagJsonOrEmbededFieldName(model, fields, embedFieldName)
-
-		for i := 0; i < lengthResult; i++ {
-			var cols []string
-			valueOfmodel := valueOfmodels.Index(i)
-			for _, fieldName := range fields {
-				if index, exist := firstLayerIndexes[fieldName]; exist {
-					valueOfFieldName := valueOfmodel.Field(index)
-					cols = AppendColumns(valueOfFieldName, cols)
-				} else if index, exist := secondLayerIndexes[fieldName]; exist {
-					embedFieldValue := reflect.Indirect(valueOfmodel.Field(firstLayerIndexes[embedFieldName]))
-					valueOfFieldName := embedFieldValue.Field(index)
-					cols = AppendColumns(valueOfFieldName, cols)
-				}
-			}
-			rows = append(rows, strings.Join(cols, ","))
-		}
-	}
-	return rows
+type DelimiterFormatter struct {
+	Delimiter  string
+	modelType  reflect.Type
+	formatCols map[int]string
 }
 
-func AppendColumns(value reflect.Value, cols []string) []string {
-	const e = ""
-	const s = "string"
-	const in = "int"
-	const f = "float64"
-	const x = "\""
-	const y = "\"\""
-	var v = fmt.Sprintf("%v", value)
-	if v == "" || v == "0" || v == "<nil>" {
-		cols = append(cols, "")
-	} else {
-		if fmt.Sprintf("%v", value.Kind()) == s {
-			if strings.Contains(v, ",") {
-				//a := "\"" + string(strings.ReplaceAll(v, x, y)) + "\""
-				cols = append(cols, "")
-			} else {
-				cols = append(cols, fmt.Sprintf("%v", v))
-			}
-		} else if fmt.Sprintf("%v", value.Kind()) == "ptr" || fmt.Sprintf("%v", value.Kind()) == "struct" {
-			fieldDate, err := time.Parse(layoutDate, v)
-			if err != nil {
-				fmt.Println("err", fmt.Sprintf("%v", err))
-				cols = append(cols, fmt.Sprintf("%v", fmt.Sprintf("%v", v)))
-			} else {
-				cols = append(cols, fmt.Sprintf("%v", fieldDate.UTC().Format(layout)))
-			}
-		} else if fmt.Sprintf("%v", value.Kind()) == in || fmt.Sprintf("%v", value.Kind()) == f {
-			cols = append(cols, fmt.Sprintf("%v", v))
+func NewDelimiterFormatter(modelType reflect.Type, opts ...string) *DelimiterFormatter {
+	sep := ","
+	if len(opts) > 0 && len(opts[0]) > 0 {
+		sep = opts[0]
+	}
+	formatCols, err := GetIndexesByTag(modelType, "format")
+	if err != nil {
+		panic("error get formatCols")
+	}
+	return &DelimiterFormatter{modelType: modelType, formatCols: formatCols, Delimiter: sep}
+}
+
+func (f *DelimiterFormatter) Format(model interface{}) (string, error) {
+	arr := make([]string, 0)
+	sumValue := reflect.Indirect(reflect.ValueOf(model))
+	for i := 0; i < sumValue.NumField(); i++ {
+		value := fmt.Sprint(sumValue.Field(i).Interface())
+		if value == "" || value == "0" || value == "<nil>" {
+			value = ""
 		} else {
-			cols = append(cols, fmt.Sprintf("%v", ""))
+			value = fmt.Sprint(reflect.Indirect(sumValue.Field(i)).Interface())
 		}
-	}
-	return cols
-}
 
-func findIndexByTagJsonOrEmbededFieldName(model interface{}, jsonNames []string, embedFieldName string) (firstLayerIndex map[string]int, secondLayerIndexes map[string]int) {
-	tmp := make([]string, len(jsonNames))
-	copy(tmp, jsonNames)
-
-	firstLayerIndex = map[string]int{}
-	secondLayerIndexes = map[string]int{}
-	modelValue := reflect.Indirect(reflect.ValueOf(model))
-	numField := modelValue.NumField()
-
-	for i := 0; i < numField; i++ {
-		if jsonTag, exist := modelValue.Type().Field(i).Tag.Lookup("json"); exist {
-			for j, name := range tmp {
-				tags := strings.Split(jsonTag, ",")
-				for _, tag := range tags {
-					if strings.Compare(strings.TrimSpace(tag), name) == 0 {
-						firstLayerIndex[name] = i
-						tmp = append(tmp[:j], tmp[j+1:]...)
-						break
-					}
+		if sumValue.Field(i).Type().String() == "string" {
+			if strings.Contains(value, f.Delimiter) {
+				value = "\"" + value + "\""
+			} else {
+				if strings.Contains(value, `"`) {
+					value = strings.ReplaceAll(value, `"`, `\"`)
 				}
 			}
 		}
-		if modelValue.Type().Field(i).Name == embedFieldName {
-			firstLayerIndex[embedFieldName] = i
-			for j, name := range tmp {
-				embedValue := reflect.Indirect(modelValue.Field(i))
-				if index, _ := findIndexByTagJson(embedValue.Type(), name); index != -1 {
-					secondLayerIndexes[name] = index
-					tmp = append(tmp[:j], tmp[j+1:]...)
-					break
+
+		if format, _ := f.formatCols[i]; len(format) > 0 {
+			if strings.Contains(format, "dateFormat:") {
+				layoutDateStr := strings.ReplaceAll(format, "dateFormat:", "")
+				fieldDate, err := time.Parse(DateLayout, value)
+				if err != nil {
+					fmt.Println("err", fmt.Sprintf("%v", err))
+					value = fmt.Sprintf("%v", fmt.Sprintf("%v", value))
+				} else {
+					value = fmt.Sprintf("%v", fieldDate.UTC().Format(layoutDateStr))
 				}
 			}
 		}
+		arr = append(arr, value)
 	}
-	return
+	return strings.Join(arr, f.Delimiter) + "\n", nil
 }
 
-func findIndexByTagJson(modelType reflect.Type, jsonName string) (int, string) {
-	numField := modelType.NumField()
-	for i := 0; i < numField; i++ {
+func GetIndexesByTag(modelType reflect.Type, tagName string) (map[int]string, error) {
+	ma := make(map[int]string, 0)
+	if modelType.Kind() != reflect.Struct {
+		return ma, errors.New("bad type")
+	}
+	for i := 0; i < modelType.NumField(); i++ {
 		field := modelType.Field(i)
-		jsonTag := field.Tag.Get("json")
-		tags := strings.Split(jsonTag, ",")
-		for _, tag := range tags {
-			if strings.Compare(strings.TrimSpace(tag), jsonName) == 0 {
-				return i, field.Name
-			}
+		tagValue := field.Tag.Get(tagName)
+		if len(tagValue) > 0 {
+			ma[i] = tagValue
+		} else {
+			ma[i] = ""
 		}
 	}
-	return -1, ""
+	return ma, nil
 }
