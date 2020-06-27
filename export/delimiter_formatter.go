@@ -50,11 +50,12 @@ func ToTextWithDelimiter(ctx context.Context, model interface{}, delimiter strin
 			if kind == reflect.Ptr && field.IsNil() {
 				value = ""
 			} else {
+				value = fmt.Sprint(field.Interface())
 				v := field.Interface()
 				if kind == reflect.Ptr {
 					v = reflect.Indirect(reflect.ValueOf(v)).Interface()
 				}
-				d, okD := v.(*time.Time)
+				d, okD := v.(time.Time)
 				if okD {
 					if len(format) > 0 {
 						value = d.Format(format)
@@ -64,14 +65,11 @@ func ToTextWithDelimiter(ctx context.Context, model interface{}, delimiter strin
 				} else {
 					s, okS := v.(string)
 					if okS {
-						if strings.Contains(s, delimiter) {
-							if strings.Contains(value, `"`) {
-								s = strings.ReplaceAll(s, `"`, `""`)
-							}
+						if strings.Contains(value, `"`) || strings.Contains(s, delimiter) {
+							s = strings.ReplaceAll(s, `"`, `""`)
 							value = "\"" + s + "\""
 						}
-					} else {
-						value = fmt.Sprint(field.Interface())
+
 					}
 				}
 			}

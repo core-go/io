@@ -70,7 +70,7 @@ func (s *Exporter) ScanAndWrite(ctx context.Context, rows *sql.Rows, structType 
 
 	for rows.Next() {
 		initModel := reflect.New(structType).Interface()
-		r, swapValues := StructScan(initModel, nil, s.fieldsIndex, nil)
+		r, swapValues := StructScan(initModel, s.columns, s.fieldsIndex, nil)
 		if err := rows.Scan(r...); err != nil {
 			return err
 		}

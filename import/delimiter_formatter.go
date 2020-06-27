@@ -47,7 +47,7 @@ type DelimiterFormatter struct {
 
 func (f DelimiterFormatter) ToStruct(ctx context.Context, lines []string) (interface{}, error) {
 	record := reflect.New(f.modelType).Interface()
-	err := ScanLine(lines, f.modelType, &record, f.formatCols)
+	err := ScanLine(lines, f.modelType, record, f.formatCols)
 	if err != nil {
 		return nil, err
 	}
