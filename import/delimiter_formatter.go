@@ -74,14 +74,15 @@ type Delimiter struct {
 
 func (f DelimiterFormatter) ToStruct(ctx context.Context, lineStr string, res interface{}) (error) {
 	lines := strings.Split(lineStr, f.separator)
-	err := ScanLine(lines, f.modelType, res, f.formatCols)
+	err := ScanLine(lines, res, f.formatCols)
 	if err != nil {
 		return err
 	}
 	return err
 }
 
-func ScanLine(lines []string, modelType reflect.Type, record interface{}, formatCols map[int]Delimiter) error {
+func ScanLine(lines []string, record interface{}, formatCols map[int]Delimiter) error {
+	modelType := reflect.TypeOf(record).Elem()
 	s := reflect.Indirect(reflect.ValueOf(record))
 	numFields := s.NumField()
 	for i := 0; i < numFields; i++ {

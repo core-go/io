@@ -70,14 +70,15 @@ func GetIndexes(modelType reflect.Type, tagName string) (map[int]*FixedLength, e
 	return ma, nil
 }
 func (f FixedLengthFormatter) ToStruct(ctx context.Context, line string, res interface{}) (error) {
-	err := ScanLineFixLength(line, f.modelType, res, f.formatCols)
+	err := ScanLineFixLength(line, res, f.formatCols)
 	if err != nil {
 		return err
 	}
 	return err
 }
 
-func ScanLineFixLength(line string, modelType reflect.Type, record interface{}, formatCols map[int]*FixedLength) error {
+func ScanLineFixLength(line string, record interface{}, formatCols map[int]*FixedLength) error {
+	modelType := reflect.TypeOf(record).Elem()
 	s := reflect.Indirect(reflect.ValueOf(record))
 	numFields := modelType.NumField()
 	start := 0
