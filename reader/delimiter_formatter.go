@@ -1,4 +1,4 @@
-package impt
+package reader
 
 import (
 	"context"
@@ -47,7 +47,7 @@ func GetIndexesByTag(modelType reflect.Type, tagName string) (map[int]Delimiter,
 	}
 	return ma, nil
 }
-func NewDelimiterFormatter(modelType reflect.Type, options... string) (*DelimiterFormatter, error) {
+func NewDelimiterFormatter(modelType reflect.Type, options ...string) (*DelimiterFormatter, error) {
 	formatCols, err := GetIndexesByTag(modelType, "format")
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func NewDelimiterFormatter(modelType reflect.Type, options... string) (*Delimite
 type DelimiterFormatter struct {
 	modelType  reflect.Type
 	formatCols map[int]Delimiter
-	separator string
+	separator  string
 }
 
 type Delimiter struct {
@@ -72,7 +72,7 @@ type Delimiter struct {
 	Scale  int
 }
 
-func (f DelimiterFormatter) ToStruct(ctx context.Context, lineStr string, res interface{}) (error) {
+func (f DelimiterFormatter) ToStruct(ctx context.Context, lineStr string, res interface{}) error {
 	lines := strings.Split(lineStr, f.separator)
 	err := ScanLine(lines, res, f.formatCols)
 	if err != nil {
@@ -147,7 +147,7 @@ func ScanLine(lines []string, record interface{}, formatCols map[int]Delimiter) 
 			case "big.Float", "*big.Float":
 				if formatf, ok := formatCols[i]; ok {
 					bf := new(big.Float)
-					if bfv, ok := bf.SetString(line);ok{
+					if bfv, ok := bf.SetString(line); ok {
 						if formatf.Scale >= 0 && bfv != nil {
 							k := Round(*bf, formatf.Scale)
 							bf = &k

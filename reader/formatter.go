@@ -1,27 +1,28 @@
-package impt
+package reader
 
 import (
 	"context"
 	"errors"
-	"reflect"
 	"golang.org/x/text/encoding"
+	"reflect"
 )
 
-type csvType string
+type FileType string
+
 const (
-	DelimiterType csvType = "Delimiter"
-	FixedlengthType csvType = "Fixedlength"
+	DelimiterType   FileType = "Delimiter"
+	FixedlengthType FileType = "Fixedlength"
 )
 
 type Formater interface {
-	ToStruct(ctx context.Context, line string, res interface{}) (error)
+	ToStruct(ctx context.Context, line string, res interface{}) error
 }
 
-func NewFormater(modelType reflect.Type, csvType csvType, opts... string) (Formater, error) {
-	if csvType == DelimiterType {
+func NewFormater(modelType reflect.Type, fileType FileType, opts ...string) (Formater, error) {
+	if fileType == DelimiterType {
 		return NewDelimiterFormatter(modelType, opts...)
 	}
-	if csvType == FixedlengthType {
+	if fileType == FixedlengthType {
 		return NewFixedLengthFormatter(modelType)
 	}
 	return nil, errors.New("Bad csv type")
@@ -31,7 +32,7 @@ type Reader interface {
 	Read(next func(lines string, err error, numLine int) error) error
 }
 
-func NewReader(buildFileName func() string, csvType csvType, opts... *encoding.Decoder) (Reader, error) {
+func NewReader(buildFileName func() string, csvType FileType, opts ...*encoding.Decoder) (Reader, error) {
 	if csvType == DelimiterType {
 		return NewDelimiterFileReader(buildFileName)
 	}

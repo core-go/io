@@ -1,4 +1,4 @@
-package export
+package sql
 
 import (
 	"database/sql"
@@ -62,7 +62,7 @@ func FindTag(tag string, key string) (string, bool) {
 	return "", false
 }
 
-func StructScan(s interface{}, columns []string, fieldsIndex map[string]int, options...func(interface{}) interface {
+func StructScan(s interface{}, columns []string, fieldsIndex map[string]int, options ...func(interface{}) interface {
 	driver.Valuer
 	sql.Scanner
 }) (r []interface{}, swapValues map[int]interface{}) {

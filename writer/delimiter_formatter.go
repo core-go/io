@@ -1,4 +1,4 @@
-package export
+package writer
 
 import (
 	"context"
@@ -131,7 +131,7 @@ func GetIndexesByTag(modelType reflect.Type, tagName string, skipTag string) (ma
 					tagValue = strings.ReplaceAll(tagValue, "dateFormat:", "")
 					v.Format = tagValue
 				}
-				
+
 			}
 		} else {
 			if len(tagValue) > 0 {
@@ -147,7 +147,7 @@ func GetIndexesByTag(modelType reflect.Type, tagName string, skipTag string) (ma
 					v.Scale = scale
 				}
 			} else {
-				
+
 			}
 		}
 		ma[i] = v

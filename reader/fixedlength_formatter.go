@@ -1,4 +1,4 @@
-package impt
+package reader
 
 import (
 	"context"
@@ -69,7 +69,7 @@ func GetIndexes(modelType reflect.Type, tagName string) (map[int]*FixedLength, e
 	}
 	return ma, nil
 }
-func (f FixedLengthFormatter) ToStruct(ctx context.Context, line string, res interface{}) (error) {
+func (f FixedLengthFormatter) ToStruct(ctx context.Context, line string, res interface{}) error {
 	err := ScanLineFixLength(line, res, f.formatCols)
 	if err != nil {
 		return err
