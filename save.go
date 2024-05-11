@@ -11,7 +11,7 @@ func Save(fullName string, content string) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(fullName, []byte(content), os.ModePerm)
+	return os.WriteFile(fullName, []byte(content), os.ModePerm)
 }
 func List(path string) ([]string, error) {
 	var names []string

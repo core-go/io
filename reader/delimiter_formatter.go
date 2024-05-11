@@ -75,9 +75,6 @@ type Delimiter struct {
 func (f DelimiterFormatter) ToStruct(ctx context.Context, lineStr string, res interface{}) error {
 	lines := strings.Split(lineStr, f.separator)
 	err := ScanLine(lines, res, f.formatCols)
-	if err != nil {
-		return err
-	}
 	return err
 }
 

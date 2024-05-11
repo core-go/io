@@ -25,7 +25,7 @@ func NewFormater(modelType reflect.Type, fileType FileType, opts ...string) (For
 	if fileType == FixedlengthType {
 		return NewFixedLengthFormatter(modelType)
 	}
-	return nil, errors.New("Bad csv type")
+	return nil, errors.New("bad csv type")
 }
 
 type Reader interface {
@@ -39,5 +39,5 @@ func NewReader(buildFileName func() string, csvType FileType, opts ...*encoding.
 	if csvType == FixedlengthType {
 		return NewFixedlengthFileReader(buildFileName, opts...)
 	}
-	return nil, errors.New("Bad csv type")
+	return nil, errors.New("bad csv type")
 }
