@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"strings"
 	"unicode"
 
-	s "github.com/core-go/io/import"
+	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
+
+	s "github.com/core-go/io/importer"
 )
 
 const (
@@ -16,27 +17,70 @@ const (
 	patch  = "patch"
 )
 
-type DefaultValidator struct {
+type Validator struct {
 	validate           *validator.Validate
+	Trans              *ut.Translator
 	CustomValidateList []CustomValidate
+	IgnoreField        bool
+	Map                map[string]string
 }
 
-func NewValidator() *DefaultValidator {
-	list := GetCustomValidateList()
-	return &DefaultValidator{CustomValidateList: list}
+func NewValidator(opts ...bool) (*Validator, error) {
+	return NewValidatorWithMap(nil, opts...)
 }
-
-func (p *DefaultValidator) Validate(ctx context.Context, model interface{}) ([]s.ErrorMessage, error) {
-	errors := make([]s.ErrorMessage, 0)
-	if p.validate == nil {
-		validate := validator.New()
-		validate = p.RegisterCustomValidate(validate)
-		p.validate = validate
+func NewValidatorWithMap(mp map[string]string, opts ...bool) (*Validator, error) {
+	register := true
+	if len(opts) > 0 {
+		register = opts[0]
 	}
+	ignoreField := false
+	if len(opts) > 1 {
+		ignoreField = opts[1]
+	}
+	uValidate, uTranslator, err := NewDefaultValidator()
+	if err != nil {
+		return nil, err
+	}
+	list := GetCustomValidateList()
+	validator := &Validator{Map: mp, validate: uValidate, Trans: &uTranslator, CustomValidateList: list, IgnoreField: ignoreField}
+	if register {
+		err2 := validator.RegisterCustomValidate()
+		if err2 != nil {
+			return validator, err2
+		}
+	}
+	return validator, nil
+}
+func NewDefaultChecker() (*validator.Validate, ut.Translator, error) {
+	return NewDefaultValidator()
+}
+func NewDefaultValidator() (*validator.Validate, ut.Translator, error) {
+	validate := validator.New()
+	var transl ut.Translator
+	if trans != nil {
+		transl = *trans
+	} else {
+		list := GetCustomValidateList()
+		for _, v := range list {
+			err := validate.RegisterValidation(v.Tag, v.Fn)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+		ptr, err := RegisterTranslatorEn(validate)
+		if err != nil {
+			return nil, nil, err
+		}
+		transl = ptr
+	}
+	return validate, transl, nil
+}
+func (p *Validator) Validate(ctx context.Context, model interface{}) ([]s.ErrorMessage, error) {
+	errors := make([]s.ErrorMessage, 0)
 	err := p.validate.Struct(model)
 
 	if err != nil {
-		errors, err = MapErrors(err)
+		errors, err = p.MapErrors(err)
 	}
 	v := ctx.Value(method)
 	if v != nil {
@@ -44,7 +88,25 @@ func (p *DefaultValidator) Validate(ctx context.Context, model interface{}) ([]s
 		if ok {
 			if v2 == patch {
 				errs := RemoveRequiredError(errors)
+				if p.Map != nil {
+					l := len(errs)
+					for i := 0; i < l; i++ {
+						nv, ok := p.Map[errs[i].Code]
+						if ok {
+							errs[i].Code = nv
+						}
+					}
+				}
 				return errs, nil
+			}
+		}
+	}
+	if p.Map != nil {
+		l := len(errors)
+		for i := 0; i < l; i++ {
+			nv, ok := p.Map[errors[i].Code]
+			if ok {
+				errors[i].Code = nv
 			}
 		}
 	}
@@ -58,19 +120,7 @@ var alias = map[string]string{
 	"ltefield": "maxfield",
 }
 
-func MapErrors(err error) (list []s.ErrorMessage, err1 error) {
-	if _, ok := err.(*validator.InvalidValidationError); ok {
-		err1 = fmt.Errorf("InvalidValidationError")
-		return
-	}
-	for _, err := range err.(validator.ValidationErrors) {
-		code := formatCodeMsg(err)
-		list = append(list, s.ErrorMessage{Field: FormatErrorField(err.Namespace()), Code: code})
-	}
-	return
-}
-
-func formatCodeMsg(err validator.FieldError) string {
+func getTagName(err validator.FieldError) string {
 	var code string
 	if aliasTag, ok := alias[err.Tag()]; ok {
 		if (err.Tag() == "max" || err.Tag() == "min") && err.Kind() != reflect.String {
@@ -86,26 +136,6 @@ func formatCodeMsg(err validator.FieldError) string {
 	}
 	return code
 }
-func (p *DefaultValidator) RegisterCustomValidate(validate *validator.Validate) *validator.Validate {
-	for _, v := range p.CustomValidateList {
-		validate.RegisterValidation(v.Tag, v.Fn)
-	}
-	return validate
-}
-func FormatErrorField(s string) string {
-	splitField := strings.Split(s, ".")
-	length := len(splitField)
-	if length == 1 {
-		return lcFirstChar(splitField[0])
-	} else if length > 1 {
-		var tmp []string
-		for _, v := range splitField[1:] {
-			tmp = append(tmp, lcFirstChar(v))
-		}
-		return strings.Join(tmp, ".")
-	}
-	return s
-}
 func lcFirstChar(s string) string {
 	if len(s) > 0 {
 		runes := []rune(s)
@@ -113,4 +143,37 @@ func lcFirstChar(s string) string {
 		return string(runes)
 	}
 	return s
+}
+func (p *Validator) RegisterCustomValidate() error {
+	for _, v := range p.CustomValidateList {
+		err := p.validate.RegisterValidation(v.Tag, v.Fn)
+		if err != nil {
+			return err
+		}
+	}
+	if p.Trans != nil && p.validate != nil {
+		// register default translate
+		for _, validate := range p.CustomValidateList {
+			if text, ok := translations[validate.Tag]; ok {
+				err := AddMessage(p.validate, *p.Trans, validate.Tag, text, true)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (p *Validator) MapErrors(err error) (list []s.ErrorMessage, err1 error) {
+	if _, ok := err.(*validator.InvalidValidationError); ok {
+		err1 = fmt.Errorf("InvalidValidationError")
+		return
+	}
+	tr := *p.Trans
+	for _, err := range err.(validator.ValidationErrors) {
+		code := getTagName(err)
+		list = append(list, s.ErrorMessage{Field: FormatErrorField(err.Namespace()), Code: code, Message: err.Translate(tr), Param: err.Param()})
+	}
+	return
 }
