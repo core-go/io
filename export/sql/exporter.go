@@ -56,31 +56,34 @@ type Exporter struct {
 	Close       func() error
 }
 
-func (s *Exporter) Export(ctx context.Context) error {
+func (s *Exporter) Export(ctx context.Context) (int64, error) {
 	query, p := s.BuildQuery(ctx)
 	rows, err := s.DB.QueryContext(ctx, query, p...)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	return s.ScanAndWrite(ctx, rows, s.modelType)
 }
 
-func (s *Exporter) ScanAndWrite(ctx context.Context, rows *sql.Rows, structType reflect.Type) error {
+func (s *Exporter) ScanAndWrite(ctx context.Context, rows *sql.Rows, structType reflect.Type) (int64, error) {
 	defer s.Close()
 
+	var i int64
+	i = 0
 	for rows.Next() {
 		initModel := reflect.New(structType).Interface()
 		r, swapValues := StructScan(initModel, s.columns, s.fieldsIndex, nil)
 		if err := rows.Scan(r...); err != nil {
-			return err
+			return i, err
 		}
 		SwapValuesToBool(initModel, &swapValues)
 		err1 := s.TransformAndWrite(ctx, s.Write, initModel)
 		if err1 != nil {
-			return err1
+			return i, err1
 		}
+		i = i + 1
 	}
-	return nil
+	return i, nil
 }
 
 func (s *Exporter) TransformAndWrite(ctx context.Context, write func(p []byte) (n int, err error), model interface{}) error {

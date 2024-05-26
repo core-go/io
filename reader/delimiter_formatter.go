@@ -15,35 +15,37 @@ const (
 )
 
 func GetIndexesByTag(modelType reflect.Type, tagName string) (map[int]Delimiter, error) {
-	ma := make(map[int]Delimiter, 0)
+	ma := make(map[int]Delimiter)
 	if modelType.Kind() != reflect.Struct {
 		return ma, errors.New("bad type")
 	}
 	for i := 0; i < modelType.NumField(); i++ {
 		field := modelType.Field(i)
 		tagValue := field.Tag.Get(tagName)
-		v := Delimiter{}
-		tagScale, sOk := field.Tag.Lookup("scale")
-		if sOk {
-			scale, err := strconv.Atoi(tagScale)
-			if err == nil {
-				v.Scale = scale
-			}
-		}
-		if len(tagValue) > 0 {
-			if strings.Contains(tagValue, "dateFormat:") {
-				tagValue = strings.ReplaceAll(tagValue, "dateFormat:", "")
-			} else if sOk == false && strings.Contains(tagValue, "scale:") {
-				tagValue = strings.ReplaceAll(tagValue, "scale:", "")
-				scale, err1 := strconv.Atoi(tagValue)
-				if err1 != nil {
-					return ma, err1
+		if tagValue != "-" {
+			v := Delimiter{}
+			tagScale, sOk := field.Tag.Lookup("scale")
+			if sOk {
+				scale, err := strconv.Atoi(tagScale)
+				if err == nil {
+					v.Scale = scale
 				}
-				v.Scale = scale
 			}
-			v.Format = tagValue
+			if len(tagValue) > 0 {
+				if strings.Contains(tagValue, "dateFormat:") {
+					tagValue = strings.ReplaceAll(tagValue, "dateFormat:", "")
+				} else if sOk == false && strings.Contains(tagValue, "scale:") {
+					tagValue = strings.ReplaceAll(tagValue, "scale:", "")
+					scale, err1 := strconv.Atoi(tagValue)
+					if err1 != nil {
+						return ma, err1
+					}
+					v.Scale = scale
+				}
+				v.Format = tagValue
+			}
+			ma[i] = v
 		}
-		ma[i] = v
 	}
 	return ma, nil
 }
@@ -77,12 +79,19 @@ func (f DelimiterFormatter) ToStruct(ctx context.Context, lineStr string, res in
 	err := ScanLine(lines, res, f.formatCols)
 	return err
 }
-
+func Min(n1 int, n2 int) int {
+	if n1 < n2 {
+		return n1
+	}
+	return n2
+}
 func ScanLine(lines []string, record interface{}, formatCols map[int]Delimiter) error {
 	modelType := reflect.TypeOf(record).Elem()
 	s := reflect.Indirect(reflect.ValueOf(record))
 	numFields := s.NumField()
-	for i := 0; i < numFields; i++ {
+	l := len(formatCols)
+	le := Min(numFields, l)
+	for i := 0; i < le; i++ {
 		field := modelType.Field(i)
 		typef := field.Type.String()
 		line := lines[i]

@@ -13,7 +13,7 @@ func NewExportRepository(db *mongo.Collection, modelType reflect.Type,
 	transform func(context.Context, interface{}) string,
 	write func(p []byte) (n int, err error),
 	close func() error,
-	opts... func(context.Context) *options.FindOptions,
+	opts ...func(context.Context) *options.FindOptions,
 ) *Exporter {
 	return NewExporter(db, modelType, buildQuery, transform, write, close, opts...)
 }
@@ -22,7 +22,7 @@ func NewExportAdapter(db *mongo.Collection, modelType reflect.Type,
 	transform func(context.Context, interface{}) string,
 	write func(p []byte) (n int, err error),
 	close func() error,
-	opts... func(context.Context) *options.FindOptions,
+	opts ...func(context.Context) *options.FindOptions,
 ) *Exporter {
 	return NewExporter(db, modelType, buildQuery, transform, write, close, opts...)
 }
@@ -31,7 +31,7 @@ func NewExportService(db *mongo.Collection, modelType reflect.Type,
 	transform func(context.Context, interface{}) string,
 	write func(p []byte) (n int, err error),
 	close func() error,
-	opts... func(context.Context) *options.FindOptions,
+	opts ...func(context.Context) *options.FindOptions,
 ) *Exporter {
 	return NewExporter(db, modelType, buildQuery, transform, write, close, opts...)
 }
@@ -41,7 +41,7 @@ func NewExporter(db *mongo.Collection, modelType reflect.Type,
 	transform func(context.Context, interface{}) string,
 	write func(p []byte) (n int, err error),
 	close func() error,
-	opts... func(context.Context) *options.FindOptions,
+	opts ...func(context.Context) *options.FindOptions,
 ) *Exporter {
 	var opt func(context.Context) *options.FindOptions
 	if len(opts) > 0 && opts[0] != nil {
@@ -60,7 +60,7 @@ type Exporter struct {
 	Close            func() error
 }
 
-func (s *Exporter) Export(ctx context.Context) error {
+func (s *Exporter) Export(ctx context.Context) (int64, error) {
 	query := s.BuildQuery(ctx)
 	var cursor *mongo.Cursor
 	var err error
@@ -71,18 +71,24 @@ func (s *Exporter) Export(ctx context.Context) error {
 		cursor, err = s.Collection.Find(ctx, query)
 	}
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer cursor.Close(ctx)
+	var i int64
+	i = 0
 	for cursor.Next(ctx) {
 		initModel := reflect.New(s.modelType).Interface()
 		err = cursor.Decode(initModel)
 		if err != nil {
-			return err
+			return i, err
 		}
-		s.TransformAndWrite(ctx, s.Write, initModel)
+		err1 := s.TransformAndWrite(ctx, s.Write, initModel)
+		if err1 != nil {
+			return i, err1
+		}
+		i = i + 1
 	}
-	return cursor.Err()
+	return i, cursor.Err()
 }
 
 func (s *Exporter) TransformAndWrite(ctx context.Context, write func(p []byte) (n int, err error), model interface{}) error {
