@@ -5,62 +5,60 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"reflect"
 )
 
-func NewExportRepository(db *mongo.Collection, modelType reflect.Type,
+func NewExportRepository[T any](db *mongo.Collection,
 	buildQuery func(context.Context) bson.D,
-	transform func(context.Context, interface{}) string,
+	transform func(context.Context, *T) string,
 	write func(p []byte) (n int, err error),
 	close func() error,
 	opts ...func(context.Context) *options.FindOptions,
-) *Exporter {
-	return NewExporter(db, modelType, buildQuery, transform, write, close, opts...)
+) *Exporter[T] {
+	return NewExporter[T](db, buildQuery, transform, write, close, opts...)
 }
-func NewExportAdapter(db *mongo.Collection, modelType reflect.Type,
+func NewExportAdapter[T any](db *mongo.Collection,
 	buildQuery func(context.Context) bson.D,
-	transform func(context.Context, interface{}) string,
+	transform func(context.Context, *T) string,
 	write func(p []byte) (n int, err error),
 	close func() error,
 	opts ...func(context.Context) *options.FindOptions,
-) *Exporter {
-	return NewExporter(db, modelType, buildQuery, transform, write, close, opts...)
+) *Exporter[T] {
+	return NewExporter[T](db, buildQuery, transform, write, close, opts...)
 }
-func NewExportService(db *mongo.Collection, modelType reflect.Type,
+func NewExportService[T any](db *mongo.Collection,
 	buildQuery func(context.Context) bson.D,
-	transform func(context.Context, interface{}) string,
+	transform func(context.Context, *T) string,
 	write func(p []byte) (n int, err error),
 	close func() error,
 	opts ...func(context.Context) *options.FindOptions,
-) *Exporter {
-	return NewExporter(db, modelType, buildQuery, transform, write, close, opts...)
+) *Exporter[T] {
+	return NewExporter[T](db, buildQuery, transform, write, close, opts...)
 }
 
-func NewExporter(db *mongo.Collection, modelType reflect.Type,
+func NewExporter[T any](db *mongo.Collection,
 	buildQuery func(context.Context) bson.D,
-	transform func(context.Context, interface{}) string,
+	transform func(context.Context, *T) string,
 	write func(p []byte) (n int, err error),
 	close func() error,
 	opts ...func(context.Context) *options.FindOptions,
-) *Exporter {
+) *Exporter[T] {
 	var opt func(context.Context) *options.FindOptions
 	if len(opts) > 0 && opts[0] != nil {
 		opt = opts[0]
 	}
-	return &Exporter{Collection: db, modelType: modelType, Write: write, Close: close, Transform: transform, BuildQuery: buildQuery, BuildFindOptions: opt}
+	return &Exporter[T]{Collection: db, Write: write, Close: close, Transform: transform, BuildQuery: buildQuery, BuildFindOptions: opt}
 }
 
-type Exporter struct {
+type Exporter[T any] struct {
 	Collection       *mongo.Collection
-	modelType        reflect.Type
-	Transform        func(context.Context, interface{}) string
+	Transform        func(context.Context, *T) string
 	BuildQuery       func(context.Context) bson.D
 	BuildFindOptions func(context.Context) *options.FindOptions
 	Write            func(p []byte) (n int, err error)
 	Close            func() error
 }
 
-func (s *Exporter) Export(ctx context.Context) (int64, error) {
+func (s *Exporter[T]) Export(ctx context.Context) (int64, error) {
 	query := s.BuildQuery(ctx)
 	var cursor *mongo.Cursor
 	var err error
@@ -77,12 +75,12 @@ func (s *Exporter) Export(ctx context.Context) (int64, error) {
 	var i int64
 	i = 0
 	for cursor.Next(ctx) {
-		initModel := reflect.New(s.modelType).Interface()
-		err = cursor.Decode(initModel)
+		var obj T
+		err = cursor.Decode(&obj)
 		if err != nil {
 			return i, err
 		}
-		err1 := s.TransformAndWrite(ctx, s.Write, initModel)
+		err1 := s.TransformAndWrite(ctx, s.Write, &obj)
 		if err1 != nil {
 			return i, err1
 		}
@@ -91,7 +89,7 @@ func (s *Exporter) Export(ctx context.Context) (int64, error) {
 	return i, cursor.Err()
 }
 
-func (s *Exporter) TransformAndWrite(ctx context.Context, write func(p []byte) (n int, err error), model interface{}) error {
+func (s *Exporter[T]) TransformAndWrite(ctx context.Context, write func(p []byte) (n int, err error), model *T) error {
 	line := s.Transform(ctx, model)
 	_, er := write([]byte(line))
 	return er

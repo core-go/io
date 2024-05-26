@@ -12,12 +12,7 @@ import (
 	s "github.com/core-go/io/importer"
 )
 
-const (
-	method = "method"
-	patch  = "patch"
-)
-
-type Validator struct {
+type Validator[T any] struct {
 	validate           *validator.Validate
 	Trans              *ut.Translator
 	CustomValidateList []CustomValidate
@@ -25,10 +20,10 @@ type Validator struct {
 	Map                map[string]string
 }
 
-func NewValidator(opts ...bool) (*Validator, error) {
-	return NewValidatorWithMap(nil, opts...)
+func NewValidator[T any](opts ...bool) (*Validator[T], error) {
+	return NewValidatorWithMap[T](nil, opts...)
 }
-func NewValidatorWithMap(mp map[string]string, opts ...bool) (*Validator, error) {
+func NewValidatorWithMap[T any](mp map[string]string, opts ...bool) (*Validator[T], error) {
 	register := true
 	if len(opts) > 0 {
 		register = opts[0]
@@ -42,7 +37,7 @@ func NewValidatorWithMap(mp map[string]string, opts ...bool) (*Validator, error)
 		return nil, err
 	}
 	list := GetCustomValidateList()
-	validator := &Validator{Map: mp, validate: uValidate, Trans: &uTranslator, CustomValidateList: list, IgnoreField: ignoreField}
+	validator := &Validator[T]{Map: mp, validate: uValidate, Trans: &uTranslator, CustomValidateList: list, IgnoreField: ignoreField}
 	if register {
 		err2 := validator.RegisterCustomValidate()
 		if err2 != nil {
@@ -75,31 +70,12 @@ func NewDefaultValidator() (*validator.Validate, ut.Translator, error) {
 	}
 	return validate, transl, nil
 }
-func (p *Validator) Validate(ctx context.Context, model interface{}) ([]s.ErrorMessage, error) {
+func (p *Validator[T]) Validate(ctx context.Context, model T) ([]s.ErrorMessage, error) {
 	errors := make([]s.ErrorMessage, 0)
 	err := p.validate.Struct(model)
 
 	if err != nil {
 		errors, err = p.MapErrors(err)
-	}
-	v := ctx.Value(method)
-	if v != nil {
-		v2, ok := v.(string)
-		if ok {
-			if v2 == patch {
-				errs := RemoveRequiredError(errors)
-				if p.Map != nil {
-					l := len(errs)
-					for i := 0; i < l; i++ {
-						nv, ok := p.Map[errs[i].Code]
-						if ok {
-							errs[i].Code = nv
-						}
-					}
-				}
-				return errs, nil
-			}
-		}
 	}
 	if p.Map != nil {
 		l := len(errors)
@@ -144,7 +120,7 @@ func lcFirstChar(s string) string {
 	}
 	return s
 }
-func (p *Validator) RegisterCustomValidate() error {
+func (p *Validator[T]) RegisterCustomValidate() error {
 	for _, v := range p.CustomValidateList {
 		err := p.validate.RegisterValidation(v.Tag, v.Fn)
 		if err != nil {
@@ -165,7 +141,7 @@ func (p *Validator) RegisterCustomValidate() error {
 	return nil
 }
 
-func (p *Validator) MapErrors(err error) (list []s.ErrorMessage, err1 error) {
+func (p *Validator[T]) MapErrors(err error) (list []s.ErrorMessage, err1 error) {
 	if _, ok := err.(*validator.InvalidValidationError); ok {
 		err1 = fmt.Errorf("InvalidValidationError")
 		return
