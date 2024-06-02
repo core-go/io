@@ -39,6 +39,9 @@ func NewExporter[T any](db *sql.DB,
 ) (*Exporter[T], error) {
 	var t T
 	modelType := reflect.TypeOf(t)
+	if modelType.Kind() == reflect.Ptr {
+		modelType = modelType.Elem()
+	}
 	fieldsIndex, err := GetColumnIndexes(modelType)
 	if err != nil {
 		return nil, err

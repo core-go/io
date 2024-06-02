@@ -1,4 +1,4 @@
-package formatter
+package transform
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/core-go/io/reader"
 )
 
-func NewDelimiterFormatter[T any](options ...string) (*DelimiterFormatter[T], error) {
+func NewDelimiterTransformer[T any](options ...string) (*DelimiterTransformer[T], error) {
 	var t T
 	modelType := reflect.TypeOf(t)
 	formatCols, err := reader.GetIndexesByTag(modelType, "format")
@@ -21,15 +21,15 @@ func NewDelimiterFormatter[T any](options ...string) (*DelimiterFormatter[T], er
 	} else {
 		separator = "|"
 	}
-	return &DelimiterFormatter[T]{formatCols: formatCols, separator: separator}, nil
+	return &DelimiterTransformer[T]{formatCols: formatCols, separator: separator}, nil
 }
 
-type DelimiterFormatter[T any] struct {
+type DelimiterTransformer[T any] struct {
 	formatCols map[int]reader.Delimiter
 	separator  string
 }
 
-func (f DelimiterFormatter[T]) ToStruct(ctx context.Context, lineStr string) (T, error) {
+func (f DelimiterTransformer[T]) ToStruct(ctx context.Context, lineStr string) (T, error) {
 	lines := strings.Split(lineStr, f.separator)
 	var res T
 	err := reader.ScanLine(lines, &res, f.formatCols)
