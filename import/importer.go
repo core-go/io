@@ -92,48 +92,36 @@ func (e *ErrorHandler) HandleException(ctx context.Context, raw string, rs inter
 	}
 }
 
-func NewImportRepository(modelType reflect.Type,
-	transform func(ctx context.Context, lines string, res interface{}) error,
-	read func(next func(line string, err error, numLine int) error) error,
-	handleException func(ctx context.Context, raw string, rs interface{}, err error, i int, fileName string),
-	validate func(ctx context.Context, model interface{}) ([]ErrorMessage, error),
-	handleError func(ctx context.Context, raw string, rs interface{}, err []ErrorMessage, i int, fileName string),
-	filename string,
-	write func(ctx context.Context, data interface{}) error,
-	opt ...func(ctx context.Context) error,
-) *Importer {
-	return NewImporter(modelType, transform, read, handleException, validate, handleError, filename, write, opt...)
-}
 func NewImportAdapter(modelType reflect.Type,
-	transform func(ctx context.Context, lines string, res interface{}) error,
 	read func(next func(line string, err error, numLine int) error) error,
-	handleException func(ctx context.Context, raw string, rs interface{}, err error, i int, fileName string),
+	transform func(ctx context.Context, lines string, res interface{}) error,
 	validate func(ctx context.Context, model interface{}) ([]ErrorMessage, error),
 	handleError func(ctx context.Context, raw string, rs interface{}, err []ErrorMessage, i int, fileName string),
+	handleException func(ctx context.Context, raw string, rs interface{}, err error, i int, fileName string),
 	filename string,
 	write func(ctx context.Context, data interface{}) error,
 	opt ...func(ctx context.Context) error,
 ) *Importer {
-	return NewImporter(modelType, transform, read, handleException, validate, handleError, filename, write, opt...)
+	return NewImporter(modelType, read, transform, validate, handleError, handleException, filename, write, opt...)
 }
 func NewImportService(modelType reflect.Type,
-	transform func(ctx context.Context, lines string, res interface{}) error,
 	read func(next func(line string, err error, numLine int) error) error,
-	handleException func(ctx context.Context, raw string, rs interface{}, err error, i int, fileName string),
+	transform func(ctx context.Context, lines string, res interface{}) error,
 	validate func(ctx context.Context, model interface{}) ([]ErrorMessage, error),
 	handleError func(ctx context.Context, raw string, rs interface{}, err []ErrorMessage, i int, fileName string),
+	handleException func(ctx context.Context, raw string, rs interface{}, err error, i int, fileName string),
 	filename string,
 	write func(ctx context.Context, data interface{}) error,
 	opt ...func(ctx context.Context) error,
 ) *Importer {
-	return NewImporter(modelType, transform, read, handleException, validate, handleError, filename, write, opt...)
+	return NewImporter(modelType, read, transform, validate, handleError, handleException, filename, write, opt...)
 }
 func NewImporter(modelType reflect.Type,
-	transform func(ctx context.Context, lines string, res interface{}) error,
 	read func(next func(line string, err error, numLine int) error) error,
-	handleException func(ctx context.Context, raw string, rs interface{}, err error, i int, fileName string),
+	transform func(ctx context.Context, lines string, res interface{}) error,
 	validate func(ctx context.Context, model interface{}) ([]ErrorMessage, error),
 	handleError func(ctx context.Context, raw string, rs interface{}, err []ErrorMessage, i int, fileName string),
+	handleException func(ctx context.Context, raw string, rs interface{}, err error, i int, fileName string),
 	filename string,
 	write func(ctx context.Context, data interface{}) error,
 	opt ...func(ctx context.Context) error,
@@ -142,7 +130,7 @@ func NewImporter(modelType reflect.Type,
 	if len(opt) > 0 {
 		flush = opt[0]
 	}
-	return &Importer{modelType: modelType, Transform: transform, Write: write, Flush: flush, Read: read, Validate: validate, HandleError: handleError, HandleException: handleException, Filename: filename}
+	return &Importer{modelType: modelType, Read: read, Transform: transform, Validate: validate, HandleError: handleError, HandleException: handleException, Write: write, Flush: flush, Filename: filename}
 }
 
 type Importer struct {

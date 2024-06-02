@@ -3,32 +3,33 @@ package sql
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"reflect"
 )
 
-func NewExportRepository(db *sql.DB, modelType reflect.Type,
-	buildQuery func(context.Context) (string, []interface{}),
-	transform func(context.Context, interface{}) string,
-	write func(p []byte) (n int, err error),
-	close func() error,
-) (*Exporter, error) {
-	return NewExporter(db, modelType, buildQuery, transform, write, close)
-}
 func NewExportAdapter(db *sql.DB, modelType reflect.Type,
 	buildQuery func(context.Context) (string, []interface{}),
 	transform func(context.Context, interface{}) string,
 	write func(p []byte) (n int, err error),
 	close func() error,
+	opts ...func(interface{}) interface {
+		driver.Valuer
+		sql.Scanner
+	},
 ) (*Exporter, error) {
-	return NewExporter(db, modelType, buildQuery, transform, write, close)
+	return NewExporter(db, modelType, buildQuery, transform, write, close, opts...)
 }
 func NewExportService(db *sql.DB, modelType reflect.Type,
 	buildQuery func(context.Context) (string, []interface{}),
 	transform func(context.Context, interface{}) string,
 	write func(p []byte) (n int, err error),
 	close func() error,
+	opts ...func(interface{}) interface {
+		driver.Valuer
+		sql.Scanner
+	},
 ) (*Exporter, error) {
-	return NewExporter(db, modelType, buildQuery, transform, write, close)
+	return NewExporter(db, modelType, buildQuery, transform, write, close, opts...)
 }
 
 func NewExporter(db *sql.DB, modelType reflect.Type,
@@ -36,24 +37,39 @@ func NewExporter(db *sql.DB, modelType reflect.Type,
 	transform func(context.Context, interface{}) string,
 	write func(p []byte) (n int, err error),
 	close func() error,
+	opts ...func(interface{}) interface {
+		driver.Valuer
+		sql.Scanner
+	},
 ) (*Exporter, error) {
 	fieldsIndex, err := GetColumnIndexes(modelType)
 	if err != nil {
 		return nil, err
 	}
 	columns := GetColumnsSelect(modelType)
-	return &Exporter{DB: db, modelType: modelType, Write: write, Close: close, columns: columns, fieldsIndex: fieldsIndex, Transform: transform, BuildQuery: buildQuery}, nil
+	var toArray func(interface{}) interface {
+		driver.Valuer
+		sql.Scanner
+	}
+	if len(opts) > 0 {
+		toArray = opts[0]
+	}
+	return &Exporter{DB: db, modelType: modelType, Array: toArray, columns: columns, Map: fieldsIndex, BuildQuery: buildQuery, Transform: transform, Write: write, Close: close}, nil
 }
 
 type Exporter struct {
-	DB          *sql.DB
-	modelType   reflect.Type
-	fieldsIndex map[string]int
-	columns     []string
-	Transform   func(context.Context, interface{}) string
-	BuildQuery  func(context.Context) (string, []interface{})
-	Write       func(p []byte) (n int, err error)
-	Close       func() error
+	DB         *sql.DB
+	modelType  reflect.Type
+	Map        map[string]int
+	columns    []string
+	Transform  func(context.Context, interface{}) string
+	BuildQuery func(context.Context) (string, []interface{})
+	Write      func(p []byte) (n int, err error)
+	Close      func() error
+	Array      func(interface{}) interface {
+		driver.Valuer
+		sql.Scanner
+	}
 }
 
 func (s *Exporter) Export(ctx context.Context) (int64, error) {
@@ -72,7 +88,7 @@ func (s *Exporter) ScanAndWrite(ctx context.Context, rows *sql.Rows, structType 
 	i = 0
 	for rows.Next() {
 		initModel := reflect.New(structType).Interface()
-		r, swapValues := StructScan(initModel, s.columns, s.fieldsIndex, nil)
+		r, swapValues := StructScan(initModel, s.columns, s.Map, nil)
 		if err := rows.Scan(r...); err != nil {
 			return i, err
 		}

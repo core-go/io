@@ -51,9 +51,9 @@ func NewExporter[T any](db *mongo.Collection,
 
 type Exporter[T any] struct {
 	Collection       *mongo.Collection
-	Transform        func(context.Context, *T) string
 	BuildQuery       func(context.Context) bson.D
 	BuildFindOptions func(context.Context) *options.FindOptions
+	Transform        func(context.Context, *T) string
 	Write            func(p []byte) (n int, err error)
 	Close            func() error
 }
