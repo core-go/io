@@ -29,7 +29,7 @@ type DelimiterTransformer[T any] struct {
 	separator  string
 }
 
-func (f DelimiterTransformer[T]) ToStruct(ctx context.Context, lineStr string) (T, error) {
+func (f DelimiterTransformer[T]) Transform(ctx context.Context, lineStr string) (T, error) {
 	lines := strings.Split(lineStr, f.separator)
 	var res T
 	err := reader.ScanLine(lines, &res, f.formatCols)

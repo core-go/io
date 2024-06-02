@@ -21,7 +21,7 @@ type FixedLengthTransformer[T any] struct {
 	formatCols map[int]*reader.FixedLength
 }
 
-func (f FixedLengthTransformer[T]) ToStruct(ctx context.Context, line string) (T, error) {
+func (f FixedLengthTransformer[T]) Transform(ctx context.Context, line string) (T, error) {
 	var res T
 	err := reader.ScanLineFixLength(line, &res, f.formatCols)
 	return res, err
