@@ -9,6 +9,9 @@ import (
 )
 
 func GetColumnsSelect(modelType reflect.Type) []string {
+	if modelType.Kind() == reflect.Ptr {
+		modelType = modelType.Elem()
+	}
 	numField := modelType.NumField()
 	columnNameKeys := make([]string, 0)
 	for i := 0; i < numField; i++ {
@@ -34,6 +37,9 @@ func GetColumnsSelect(modelType reflect.Type) []string {
 }
 func GetColumnIndexes(modelType reflect.Type) (map[string]int, error) {
 	ma := make(map[string]int)
+	if modelType.Kind() == reflect.Ptr {
+		modelType = modelType.Elem()
+	}
 	if modelType.Kind() != reflect.Struct {
 		return ma, errors.New("bad type")
 	}

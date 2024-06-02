@@ -27,7 +27,7 @@ type Delimiter struct {
 }
 
 func NewDelimiterFormatter(modelType reflect.Type, opts ...string) (*DelimiterFormatter, error) {
-	sep := ","
+	sep := "|"
 	if len(opts) > 0 && len(opts[0]) > 0 {
 		sep = opts[0]
 	}

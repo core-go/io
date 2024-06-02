@@ -58,7 +58,7 @@ func NewDelimiterFormatter(modelType reflect.Type, options ...string) (*Delimite
 	if len(options) > 0 {
 		separator = options[0]
 	} else {
-		separator = ","
+		separator = "|"
 	}
 	return &DelimiterFormatter{modelType: modelType, formatCols: formatCols, separator: separator}, nil
 }

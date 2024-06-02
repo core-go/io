@@ -13,7 +13,7 @@ type DelimiterFormatter[T any] struct {
 }
 
 func NewDelimiterFormatter[T any](opts ...string) (*DelimiterFormatter[T], error) {
-	sep := ","
+	sep := "|"
 	if len(opts) > 0 && len(opts[0]) > 0 {
 		sep = opts[0]
 	}
