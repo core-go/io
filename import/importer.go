@@ -15,13 +15,13 @@ type ErrorMessage struct {
 }
 
 type ErrorHandler struct {
-	HandleError func(ctx context.Context, format string, fields map[string]interface{})
-	FileName    string
-	LineNumber  string
-	Map         *map[string]interface{}
+	LogError   func(ctx context.Context, format string, fields map[string]interface{})
+	FileName   string
+	LineNumber string
+	Map        map[string]interface{}
 }
 
-func NewErrorHandler(logger func(ctx context.Context, format string, fields map[string]interface{}), fileName string, lineNumber string, mp *map[string]interface{}) *ErrorHandler {
+func NewErrorHandler(logger func(ctx context.Context, format string, fields map[string]interface{}), fileName string, lineNumber string, mp map[string]interface{}) *ErrorHandler {
 	if len(fileName) <= 0 {
 		fileName = "filename"
 	}
@@ -29,17 +29,17 @@ func NewErrorHandler(logger func(ctx context.Context, format string, fields map[
 		lineNumber = "lineNumber"
 	}
 	return &ErrorHandler{
-		HandleError: logger,
-		FileName:    fileName,
-		LineNumber:  lineNumber,
-		Map:         mp,
+		LogError:   logger,
+		FileName:   fileName,
+		LineNumber: lineNumber,
+		Map:        mp,
 	}
 }
 
-func (e *ErrorHandler) HandlerError(ctx context.Context, raw string, rs interface{}, err []ErrorMessage, i int, fileName string) {
+func (e *ErrorHandler) HandleError(ctx context.Context, raw string, rs interface{}, err []ErrorMessage, i int, fileName string) {
 	var ext = make(map[string]interface{})
 	if e.Map != nil {
-		ext = *e.Map
+		ext = e.Map
 	}
 	if len(e.FileName) > 0 && len(e.LineNumber) > 0 {
 		if len(fileName) > 0 {
@@ -48,26 +48,26 @@ func (e *ErrorHandler) HandlerError(ctx context.Context, raw string, rs interfac
 		if i > 0 {
 			ext[e.LineNumber] = i
 		}
-		e.HandleError(ctx, fmt.Sprintf("Message is invalid: %s %+v . Error: %+v", raw, rs, err), ext)
+		e.LogError(ctx, fmt.Sprintf("Message is invalid: %s %+v . Error: %+v", raw, rs, err), ext)
 	} else if len(e.FileName) > 0 {
 		if len(fileName) > 0 {
 			ext[e.FileName] = fileName
 		}
-		e.HandleError(ctx, fmt.Sprintf("Message is invalid: %s %+v . Error: %+v line: %d", raw, rs, err, i), ext)
+		e.LogError(ctx, fmt.Sprintf("Message is invalid: %s %+v . Error: %+v line: %d", raw, rs, err, i), ext)
 	} else if len(e.LineNumber) > 0 {
 		if i > 0 {
 			ext[e.LineNumber] = i
 		}
-		e.HandleError(ctx, fmt.Sprintf("Message is invalid: %s %+v . Error: %+v filename:%s", raw, rs, err, fileName), ext)
+		e.LogError(ctx, fmt.Sprintf("Message is invalid: %s %+v . Error: %+v filename:%s", raw, rs, err, fileName), ext)
 	} else {
-		e.HandleError(ctx, fmt.Sprintf("Message is invalid: %s %+v . Error: %+v filename:%s line: %d", raw, rs, err, fileName, i), ext)
+		e.LogError(ctx, fmt.Sprintf("Message is invalid: %s %+v . Error: %+v filename:%s line: %d", raw, rs, err, fileName, i), ext)
 	}
 }
 
-func (e *ErrorHandler) HandlerException(ctx context.Context, raw string, rs interface{}, err error, i int, fileName string) {
+func (e *ErrorHandler) HandleException(ctx context.Context, raw string, rs interface{}, err error, i int, fileName string) {
 	var ext = make(map[string]interface{})
 	if e.Map != nil {
-		ext = *e.Map
+		ext = e.Map
 	}
 	if len(e.FileName) > 0 && len(e.LineNumber) > 0 {
 		if len(fileName) > 0 {
@@ -76,19 +76,19 @@ func (e *ErrorHandler) HandlerException(ctx context.Context, raw string, rs inte
 		if i > 0 {
 			ext[e.LineNumber] = i
 		}
-		e.HandleError(ctx, fmt.Sprintf("Error to write: %s %+v . Error: %+v", raw, rs, err), ext)
+		e.LogError(ctx, fmt.Sprintf("Error to write: %s %+v . Error: %+v", raw, rs, err), ext)
 	} else if len(e.FileName) > 0 {
 		if len(fileName) > 0 {
 			ext[e.FileName] = fileName
 		}
-		e.HandleError(ctx, fmt.Sprintf("Error to write: %s %+v . Error: %+v line: %d", raw, rs, err, i), ext)
+		e.LogError(ctx, fmt.Sprintf("Error to write: %s %+v . Error: %+v line: %d", raw, rs, err, i), ext)
 	} else if len(e.LineNumber) > 0 {
 		if i > 0 {
 			ext[e.LineNumber] = i
 		}
-		e.HandleError(ctx, fmt.Sprintf("Error to write: %s %+v . Error: %+v filename:%s", raw, rs, err, fileName), ext)
+		e.LogError(ctx, fmt.Sprintf("Error to write: %s %+v . Error: %+v filename:%s", raw, rs, err, fileName), ext)
 	} else {
-		e.HandleError(ctx, fmt.Sprintf("Error to write:  %s %+v . Error: %v filename: %s line: %d", raw, rs, err, fileName, i), ext)
+		e.LogError(ctx, fmt.Sprintf("Error to write:  %s %+v . Error: %v filename: %s line: %d", raw, rs, err, fileName, i), ext)
 	}
 }
 
