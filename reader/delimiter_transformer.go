@@ -104,6 +104,31 @@ func ScanLine(lines []string, record interface{}, formatCols map[int]Delimiter) 
 				} else {
 					f.SetString(line)
 				}
+			case "time.Time", "*time.Time":
+				if format, ok := formatCols[i]; ok {
+					var fieldDate time.Time
+					var err error
+					if len(format.Format) > 0 {
+						fieldDate, err = time.Parse(format.Format, line)
+					} else {
+						fieldDate, err = time.Parse(DateLayout, line)
+					}
+					if err != nil {
+						return err
+					}
+					if f.Kind() == reflect.Ptr {
+						f.Set(reflect.ValueOf(&fieldDate))
+					} else {
+						f.Set(reflect.ValueOf(fieldDate))
+					}
+				}
+			case "float64", "*float64":
+				floatValue, _ := strconv.ParseFloat(line, 64)
+				if f.Kind() == reflect.Ptr {
+					f.Set(reflect.ValueOf(&floatValue))
+				} else {
+					f.SetFloat(floatValue)
+				}
 			case "int64", "*int64":
 				value, _ := strconv.ParseInt(line, 10, 64)
 				if f.Kind() == reflect.Ptr {
@@ -124,31 +149,6 @@ func ScanLine(lines []string, record interface{}, formatCols map[int]Delimiter) 
 					f.Set(reflect.ValueOf(&boolValue))
 				} else {
 					f.SetBool(boolValue)
-				}
-			case "float64", "*float64":
-				floatValue, _ := strconv.ParseFloat(line, 64)
-				if f.Kind() == reflect.Ptr {
-					f.Set(reflect.ValueOf(&floatValue))
-				} else {
-					f.SetFloat(floatValue)
-				}
-			case "time.Time", "*time.Time":
-				if format, ok := formatCols[i]; ok {
-					var fieldDate time.Time
-					var err error
-					if len(format.Format) > 0 {
-						fieldDate, err = time.Parse(format.Format, line)
-					} else {
-						fieldDate, err = time.Parse(DateLayout, line)
-					}
-					if err != nil {
-						return err
-					}
-					if f.Kind() == reflect.Ptr {
-						f.Set(reflect.ValueOf(&fieldDate))
-					} else {
-						f.Set(reflect.ValueOf(fieldDate))
-					}
 				}
 			case "big.Float", "*big.Float":
 				if formatf, ok := formatCols[i]; ok {

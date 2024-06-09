@@ -102,6 +102,31 @@ func ScanLineFixLength(line string, record interface{}, formatCols map[int]*Fixe
 						} else {
 							f.SetString(value)
 						}
+					case "time.Time", "*time.Time":
+						if format, ok := formatCols[j]; ok {
+							var fieldDate time.Time
+							var err error
+							if len(format.Format) > 0 {
+								fieldDate, err = time.Parse(format.Format, value)
+							} else {
+								fieldDate, err = time.Parse(DateLayout, value)
+							}
+							if err != nil {
+								return err
+							}
+							if f.Kind() == reflect.Ptr {
+								f.Set(reflect.ValueOf(&fieldDate))
+							} else {
+								f.Set(reflect.ValueOf(fieldDate))
+							}
+						}
+					case "float64", "*float64":
+						floatValue, _ := strconv.ParseFloat(value, 64)
+						if f.Kind() == reflect.Ptr {
+							f.Set(reflect.ValueOf(&floatValue))
+						} else {
+							f.SetFloat(floatValue)
+						}
 					case "int64", "*int64":
 						value, _ := strconv.ParseInt(value, 10, 64)
 						if f.Kind() == reflect.Ptr {
@@ -122,31 +147,6 @@ func ScanLineFixLength(line string, record interface{}, formatCols map[int]*Fixe
 							f.Set(reflect.ValueOf(&boolValue))
 						} else {
 							f.SetBool(boolValue)
-						}
-					case "float64", "*float64":
-						floatValue, _ := strconv.ParseFloat(value, 64)
-						if f.Kind() == reflect.Ptr {
-							f.Set(reflect.ValueOf(&floatValue))
-						} else {
-							f.SetFloat(floatValue)
-						}
-					case "time.Time", "*time.Time":
-						if format, ok := formatCols[j]; ok {
-							var fieldDate time.Time
-							var err error
-							if len(format.Format) > 0 {
-								fieldDate, err = time.Parse(format.Format, value)
-							} else {
-								fieldDate, err = time.Parse(DateLayout, value)
-							}
-							if err != nil {
-								return err
-							}
-							if f.Kind() == reflect.Ptr {
-								f.Set(reflect.ValueOf(&fieldDate))
-							} else {
-								f.Set(reflect.ValueOf(fieldDate))
-							}
 						}
 					case "big.Float", "*big.Float":
 						if formatf, ok := formatCols[j]; ok {
