@@ -31,5 +31,5 @@ func NewDelimiterFormatter[T any](opts ...string) (*DelimiterFormatter[T], error
 }
 
 func (f *DelimiterFormatter[T]) Format(ctx context.Context, model *T) string {
-	return writer.ToTextWithDelimiter(ctx, model, f.Delimiter, f.formatCols)
+	return writer.ToTextWithDelimiter(model, f.Delimiter, f.formatCols)
 }
