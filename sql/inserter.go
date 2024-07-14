@@ -59,7 +59,7 @@ func NewSqlInserter[T any](db *sql.DB, tableName string, mp func(T), toArray fun
 	return &Inserter[T]{db: db, BoolSupport: boolSupport, VersionIndex: -1, schema: schema, tableName: tableName, BuildParam: buildParam, Map: mp, ToArray: toArray}
 }
 
-func (w *Inserter[T]) Write(ctx context.Context, model interface{}) error {
+func (w *Inserter[T]) Write(ctx context.Context, model T) error {
 	if w.Map != nil {
 		w.Map(model)
 	}
