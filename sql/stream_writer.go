@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"reflect"
 )
 
@@ -59,6 +60,9 @@ func NewSqlStreamWriter[T any](db *sql.DB, tableName string, batchSize int,
 		modelType = modelType.Elem()
 	}
 	schema := CreateSchema(modelType)
+	if len(schema.Keys) <= 0 {
+		panic(fmt.Sprintf("require primary key for table '%s'", tableName))
+	}
 	return &StreamWriter[T]{db: db, Driver: driver, schema: schema, tableName: tableName, batchSize: batchSize, BuildParam: buildParam, Map: mp, ToArray: toArray}
 }
 

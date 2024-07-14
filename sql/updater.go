@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"reflect"
 )
 
@@ -56,6 +57,9 @@ func NewSqlUpdater[T any](db *sql.DB, tableName string, mp func(T), toArray func
 		modelType = modelType.Elem()
 	}
 	schema := CreateSchema(modelType)
+	if len(schema.Keys) <= 0 {
+		panic(fmt.Sprintf("require primary key for table '%s'", tableName))
+	}
 	return &Updater[T]{db: db, tableName: tableName, VersionIndex: -1, BoolSupport: boolSupport, schema: schema, BuildParam: buildParam, Map: mp, ToArray: toArray}
 }
 

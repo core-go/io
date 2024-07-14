@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"reflect"
 )
 
@@ -39,6 +40,9 @@ func NewWriterWithMap[T any](db *sql.DB, tableName string, mp func(T), toArray f
 		modelType = modelType.Elem()
 	}
 	schema := CreateSchema(modelType)
+	if len(schema.Keys) <= 0 {
+		panic(fmt.Sprintf("require primary key for table '%s'", tableName))
+	}
 	return &Writer[T]{db: db, tableName: tableName, BuildParam: buildParam, Map: mp, BoolSupport: boolSupport, schema: schema, Driver: driver, ToArray: toArray}
 }
 

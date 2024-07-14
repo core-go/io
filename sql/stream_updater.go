@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"reflect"
 )
 
@@ -55,6 +56,9 @@ func NewSqlStreamUpdater[T any](db *sql.DB, tableName string, modelType reflect.
 	driver := GetDriver(db)
 	boolSupport := driver == DriverPostgres
 	schema := CreateSchema(modelType)
+	if len(schema.Keys) <= 0 {
+		panic(fmt.Sprintf("require primary key for table '%s'", tableName))
+	}
 	return &StreamUpdater[T]{db: db, BoolSupport: boolSupport, VersionIndex: -1, schema: schema, tableName: tableName, batchSize: batchSize, BuildParam: buildParam, Map: mp, ToArray: toArray}
 }
 
