@@ -36,11 +36,11 @@ Extract-Transform-Load (ETL) is a data integration process involving the extract
 
 ##### Samples:
 - [go-sql-import](https://github.com/project-samples/go-sql-import): import data from fix-length or csv file to sql.
-- [go-hive-import](https://github.com/project-samples/go-hive-import): import data from fix-length or csv file to sql.
-- [go-cassandra-export](https://github.com/project-samples/go-cassandra-import): import data from fix-length or csv file to sql.
-- [go-elasticsearch-import](https://github.com/project-samples/go-elasticsearch-import): import data from fix-length or csv file to sql.
-- [go-mongo-export](https://github.com/project-samples/go-mongo-import): import data from fix-length or csv file to sql.
-- [go-firestore-export](https://github.com/project-samples/go-firestore-import): import data from fix-length or csv file to sql.
+- [go-hive-import](https://github.com/project-samples/go-hive-import): import data from fix-length or csv file to hive.
+- [go-cassandra-export](https://github.com/project-samples/go-cassandra-import): import data from fix-length or csv file to cassandra.
+- [go-elasticsearch-import](https://github.com/project-samples/go-elasticsearch-import): import data from fix-length or csv file to elasticsearch.
+- [go-mongo-export](https://github.com/project-samples/go-mongo-import): import data from fix-length or csv file to mongo.
+- [go-firestore-export](https://github.com/project-samples/go-firestore-import): import data from fix-length or csv file to firestore.
 
 ##### Layer Architecture
 - Popular for web development
