@@ -7,12 +7,12 @@ import (
 	"github.com/core-go/io/writer"
 )
 
-type DelimiterFormatter[T any] struct {
+type DelimiterTransformer[T any] struct {
 	Delimiter  string
 	formatCols map[int]writer.Delimiter
 }
 
-func NewDelimiterFormatter[T any](opts ...string) (*DelimiterFormatter[T], error) {
+func NewDelimiterTransformer[T any](opts ...string) (*DelimiterTransformer[T], error) {
 	sep := "|"
 	if len(opts) > 0 && len(opts[0]) > 0 {
 		sep = opts[0]
@@ -27,9 +27,12 @@ func NewDelimiterFormatter[T any](opts ...string) (*DelimiterFormatter[T], error
 	if err != nil {
 		return nil, err
 	}
-	return &DelimiterFormatter[T]{formatCols: formatCols, Delimiter: sep}, nil
+	return &DelimiterTransformer[T]{formatCols: formatCols, Delimiter: sep}, nil
+}
+func NewDelimiterFormatter[T any](opts ...string) (*DelimiterTransformer[T], error) {
+	return NewDelimiterTransformer[T](opts...)
 }
 
-func (f *DelimiterFormatter[T]) Format(ctx context.Context, model *T) string {
+func (f *DelimiterTransformer[T]) Transform(ctx context.Context, model *T) string {
 	return writer.ToTextWithDelimiter(model, f.Delimiter, f.formatCols)
 }
