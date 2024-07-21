@@ -1,10 +1,26 @@
 # io
 - Utilities to load file, save file, zip file
-## File Reader
+## ETL (Extract-Transform-Load)
+Extract-Transform-Load (ETL) is a data integration process involving the extraction of data from various sources, transformation into a suitable format, and loading into a target database or data warehouse.
+- Extracting data from various sources.
+- Transforming the data into a suitable format/structure.
+- Loading the transformed data into a target database or data warehouse.
+
+## Batch processing
+- [core-go/io](https://github.com/core-go/io) is designed for batch processing, enabling the development of complex batch applications. It supports operations such as reading, processing, and writing large volumes of data.
+- [core-go/io](https://github.com/core-go/io) is not an ETL tool. It provides the necessary libraries for implementing ETL processes. It allows developers to create jobs that extract data from sources, transform it, and load it into destinations, effectively supporting ETL operations.
+
+### Use Cases of [core-go/io](https://github.com/core-go/io) in ETL:
+- <b>Data Migration</b>: Moving and transforming data from legacy systems to new systems.
+- <b>Data Processing</b>: Handling large-scale data processing tasks like data cleansing and transformation
+- <b>Data Warehousing</b>: Loading and transforming data into data warehouses.
+
+## Features
+### File Reader
 - File Stream Reader
 - Delimiter (CSV format) File Reader
 - Fix Length File Reader
-## File Writer
+### File Writer
 - File Stream Writer
 #### Delimiter (CSV format) Transformer
 - Transform an object to Delimiter (CSV) format
