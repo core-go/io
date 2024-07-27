@@ -73,50 +73,44 @@ We provide 2 transformer adapters
 - Fix Length Transformer
 ##### Writer
 We provide many writer adapters:
-- [SQL Writer](https://github.com/core-go/sql/blob/main/writer/writer.go): to insert or update data
-- [SQL Inserter](https://github.com/core-go/sql/blob/main/writer/inserter.go): to insert data
-- [SQL Updater](https://github.com/core-go/sql/blob/main/writer/updater.go): to update data
+- SQL:
+  - [SQL Writer](https://github.com/core-go/sql/blob/main/writer/writer.go): to insert or update data
+  - [SQL Inserter](https://github.com/core-go/sql/blob/main/writer/inserter.go): to insert data
+  - [SQL Updater](https://github.com/core-go/sql/blob/main/writer/updater.go): to update data
+  - [SQL Stream Writer](https://github.com/core-go/sql/blob/main/writer/stream_writer.go): to insert or update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
+  - [SQL Stream Inserter](https://github.com/core-go/sql/blob/main/writer/stream_inserter.go): to insert data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush. Especially, we build 1 single SQL statement to improve the performance.
+  - [SQL Stream Updater](https://github.com/core-go/sql/blob/main/writer/stream_updater.go): to update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
 
+- Mongo:
+  - [Mongo Writer](https://github.com/core-go/mongo/blob/main/writer/writer.go): to insert or update data
+  - [Mongo Inserter](https://github.com/core-go/mongo/blob/main/writer/inserter.go): to insert data
+  - [Mongo Updater](https://github.com/core-go/mongo/blob/main/writer/updater.go): to update data
+  - [Mongo Stream Writer](https://github.com/core-go/mongo/blob/main/batch/stream_writer.go): to insert or update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
+  - [Mongo Stream Inserter](https://github.com/core-go/mongo/blob/main/batch/stream_inserter.go): to insert data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
+  - [Mongo Stream Updater](https://github.com/core-go/mongo/blob/main/batch/stream_updater.go): to update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
 
-- [SQL Stream Writer](https://github.com/core-go/sql/blob/main/writer/stream_writer.go): to insert or update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
-- [SQL Stream Inserter](https://github.com/core-go/sql/blob/main/writer/stream_inserter.go): to insert data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush. Especially, we build 1 single SQL statement to improve the performance.
-- [SQL Stream Updater](https://github.com/core-go/sql/blob/main/writer/stream_updater.go): to update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
+- Elastic Search
+  - [Elastic Search Writer](https://github.com/core-go/elasticsearch/blob/main/writer/writer.go): to insert or update data
+  - [Elastic Search Creator](https://github.com/core-go/elasticsearch/blob/main/writer/creator.go): to create data
+  - [Elastic Search Updater](https://github.com/core-go/elasticsearch/blob/main/writer/updater.go): to update data
+  - [Elastic Search Stream Writer](https://github.com/core-go/elasticsearch/blob/main/batch/stream_writer.go): to insert or update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
+  - [Elastic Search Stream Creator](https://github.com/core-go/elasticsearch/blob/main/batch/stream_creator.go): to create data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
+  - [Elastic Search Stream Updater](https://github.com/core-go/elasticsearch/blob/main/batch/stream_updater.go): to update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
 
+- Firestore
+  - [Firestore Writer](https://github.com/core-go/firestore/blob/main/writer/writer.go): to insert or update data
+  - [Firestore Updater](https://github.com/core-go/firestore/blob/main/writer/updater.go): to update data
 
-- [Mongo Writer](https://github.com/core-go/mongo/blob/main/writer/writer.go): to insert or update data
-- [Mongo Inserter](https://github.com/core-go/mongo/blob/main/writer/inserter.go): to insert data
-- [Mongo Updater](https://github.com/core-go/mongo/blob/main/writer/updater.go): to update data
+- Cassandra
+  - [Cassandra Writer](https://github.com/core-go/cassandra/blob/main/writer/writer.go): to insert or update data
+  - [Cassandra Inserter](https://github.com/core-go/cassandra/blob/main/writer/inserter.go): to insert data
+  - [Cassandra Updater](https://github.com/core-go/cassandra/blob/main/writer/updater.go): to update data
 
-
-- [Mongo Stream Writer](https://github.com/core-go/mongo/blob/main/batch/stream_writer.go): to insert or update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
-- [Mongo Stream Inserter](https://github.com/core-go/mongo/blob/main/batch/stream_inserter.go): to insert data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
-- [Mongo Stream Updater](https://github.com/core-go/mongo/blob/main/batch/stream_updater.go): to update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
-
-
-- [Elastic Search Writer](https://github.com/core-go/elasticsearch/blob/main/writer/writer.go): to insert or update data
-- [Elastic Search Creator](https://github.com/core-go/elasticsearch/blob/main/writer/creator.go): to create data
-- [Elastic Search Updater](https://github.com/core-go/elasticsearch/blob/main/writer/updater.go): to update data
-
-
-- [Elastic Search Stream Writer](https://github.com/core-go/elasticsearch/blob/main/batch/stream_writer.go): to insert or update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
-- [Elastic Search Stream Creator](https://github.com/core-go/elasticsearch/blob/main/batch/stream_creator.go): to create data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
-- [Elastic Search Stream Updater](https://github.com/core-go/elasticsearch/blob/main/batch/stream_updater.go): to update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
-
-
-- [Firestore Writer](https://github.com/core-go/firestore/blob/main/writer/writer.go): to insert or update data
-- [Firestore Updater](https://github.com/core-go/firestore/blob/main/writer/updater.go): to update data
-
-
-- [Cassandra Writer](https://github.com/core-go/cassandra/blob/main/writer/writer.go): to insert or update data
-- [Cassandra Inserter](https://github.com/core-go/cassandra/blob/main/writer/inserter.go): to insert data
-- [Cassandra Updater](https://github.com/core-go/cassandra/blob/main/writer/updater.go): to update data
-
-
-- [Hive Writer](https://github.com/core-go/hive/blob/main/writer/writer.go): to insert or update data
-- [Hive Inserter](https://github.com/core-go/hive/blob/main/writer/inserter.go): to insert data
-- [Hive Updater](httpshttps://github.com/core-go/hive/blob/main/writer/updater.go): to update data
-
-- [Hive Stream Updater](https://github.com/core-go/hive/blob/main/batch/stream_writer.go): to update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
+- Hive
+  - [Hive Writer](https://github.com/core-go/hive/blob/main/writer/writer.go): to insert or update data
+  - [Hive Inserter](https://github.com/core-go/hive/blob/main/writer/inserter.go): to insert data
+  - [Hive Updater](https://github.com/core-go/hive/blob/main/writer/updater.go): to update data
+  - [Hive Stream Updater](https://github.com/core-go/hive/blob/main/batch/stream_writer.go): to update data. When you write data, it keeps the data in the buffer, it does not write data. It just writes data when flush.
 
 ## Summary
 ### File Reader
