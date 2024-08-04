@@ -17,6 +17,8 @@ Extract-Transform-Load (ETL) is a data integration process involving the extract
 - [core-go/io](https://github.com/core-go/io) is designed for batch processing, enabling the development of complex batch applications. It supports operations such as reading, processing, and writing large volumes of data.
 - [core-go/io](https://github.com/core-go/io) is not an ETL tool. It provides the necessary libraries for implementing ETL processes. It allows developers to create jobs that extract data from sources, transform it, and load it into destinations, effectively supporting ETL operations.
 
+![2 common use cases of data processing](https://cdn-images-1.medium.com/max/800/1*Bhs1tjZauahaDnhCdsl6Fw.png)
+
 ### Use Cases of [core-go/io](https://github.com/core-go/io) in ETL:
 - <b>Data Migration</b>: Moving and transforming data from legacy systems to new systems.
 - <b>Data Processing</b>: Handling large-scale data processing tasks like data cleansing and transformation
