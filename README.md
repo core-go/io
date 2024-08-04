@@ -4,6 +4,9 @@
 - File Stream Reader
 - Implement ETL process for Data Processing, Business Intelligence
 
+
+- You can refer to [ETL Tool Programming vs Traditional Programming](https://www.linkedin.com/pulse/etl-tool-programming-vs-traditional-duc-nguyen-jb2gc) and [Data Processing](https://www.linkedin.com/pulse/data-processing-golang-nodejs-duc-nguyen-wv33c) at my [Linked In](https://vn.linkedin.com/in/duc-nguyen-437240239?trk=article-ssr-frontend-pulse_publisher-author-card) for more details.
+
 ## ETL (Extract-Transform-Load)
 Extract-Transform-Load (ETL) is a data integration process involving the extraction of data from various sources, transformation into a suitable format, and loading into a target database or data warehouse.
 - Extracting data from various sources.
@@ -156,8 +159,8 @@ I am finding a solution, which has the advantages of both ETL and traditional pr
 - <b>Performance</b>: for complex transformations, especially those involving iterative processes or conditionals, programming languages can be optimized for better performance.
 
 ### Conclusion
-- For simple and straightforward ETL processes, ETL tools can offer significant advantages in terms of ease of use and development speed.
-- However, for more complex transformations involving intricate logic, loops, and conditionals, traditional programming languages might offer better performance, flexibility, and maintainability.
+- The above advantages and disadvantages are key considerations in choosing between ETL tools and traditional programming for data transformation tasks. For simple and straightforward ETL processes, ETL tools can offer significant advantages in terms of ease of use and development speed. However, for more complex transformations involving intricate logic, loops, and conditionals, traditional programming languages might offer better performance, flexibility, and maintainability.
+- Ultimately, the choice depends on the specific requirements of the ETL process, the complexity of the transformations, and the skill set of the team involved. A hybrid approach, where simple tasks are handled by ETL tools and complex logic is implemented in a programming language, can also be a viable solution.
 - With [core-go/io](https://github.com/core-go/io) for GOLANG and a rich ecosystem of libraries for nodejs, we offer a hybrid approach, which can handle complex logic in a programming language, but also leverage to handle specific tasks efficiently by programming at reader and writer.
 
 ## Summary
