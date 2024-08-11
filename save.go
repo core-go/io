@@ -1,7 +1,6 @@
 package io
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -19,7 +18,7 @@ func List(path string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	folder, err := ioutil.ReadDir(absPath)
+	folder, err := os.ReadDir(absPath)
 	if err != nil {
 		return names, err
 	}
@@ -35,7 +34,7 @@ func Load(directory string) (map[string]string, error) {
 		return nil, er1
 	}
 	for _, name := range names {
-		content, er2 := ioutil.ReadFile(directory + string(os.PathSeparator) + name)
+		content, er2 := os.ReadFile(directory + string(os.PathSeparator) + name)
 		if er2 != nil {
 			return nil, er2
 		}

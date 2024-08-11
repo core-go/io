@@ -25,19 +25,63 @@ Extract-Transform-Load (ETL) is a data integration process involving the extract
 - <b>Data Warehousing</b>: Loading and transforming data into data warehouses.
 - <b>Business Intelligence</b>: Transforming raw data into meaningful insights for decision-making, to provide valuable business insights and trends.
 
-### Specific Use Cases of [core-go/io](https://github.com/core-go/io)
-#### Export from database to file
+## Specific Use Cases of [core-go/io](https://github.com/core-go/io)
+### Export from database to file
 
   ![Export from database to file](https://cdn-images-1.medium.com/max/800/1*IEMXhQXJ0hWZBPL8q2jMNw.png)
 
-##### Samples:
+#### Common Mistakes
+- <b>Inefficient Writing to I/O</b>: Large writing to I/O can slow down performance. Writing each record immediately without buffering is inefficient due to the high overhead of repeated I/O operations.
+  - <b>Solution</b>: Use bufio.Writer for more efficient writing.
+- <b>Loading All Data Into Memory</b>: Fetching all records at once can consume a lot of memory, causing the program to slow down or crash. Use streaming with cursors instead.
+  - <b>Solution</b>: Loop on each cursor. On each cursor, use bufio.Writer to write to database
+- <b>Inefficient Query</b>: Full scan the table. Do not filter on the index.
+  - Solution: If you export the whole table, you can scan the full table. If not, you need to filter on the index.
+
+#### Implementation
+#### Data Reader for SQL
+1. Build Query: For efficient query, you need to filter on the index, avoid to scan the full table. In my sample, I created index on field createdDate. In my 6 use cases, I use 4 use cases to filter on indexing field: createdDate.
+2. Scan the GO row into an appropriate GO struct:
+
+    We provide a function to map a row to a GO struct. We use gorm tag, so that this struct can be reused for gorm later, with these benefits:
+    - Simplifies the process of converting database rows into Go objects.
+    - Reduces repetitive code and potential errors in manual data mapping.
+    - Enhances code readability and maintainability.
+```go
+type User struct {
+    Id          string     `gorm:"column:id;primary_key" format:"%011s" length:"11"`
+    Username    string     `gorm:"column:username" length:"10"`
+    Email       string     `gorm:"column:email" length:"31"`
+    Phone       string     `gorm:"column:phone" length:"20"`
+    Status      bool       `gorm:"column:status" true:"1" false:"0" format:"%5s" length:"5"`
+    CreatedDate *time.Time `gorm:"column:createdDate" length:"10" format:"dateFormat:2006-01-02"`
+}
+```
+
+#### Transformer
+Transform a GO struct to a string (CSV or fixed-length format). We created 2 providers already:
+- CSV Transformer: read GO tags to transform CSV line.
+- Fixed Length Transformer: read GO tags to transform Fixed Length line.
+
+To improve performance, we cache the struct of CSV or Fixed Length Format.
+
+#### File Writer
+It is a wrapper of bufio.Writer to buffer writes to the file. This reduces the number of I/O operations.
+
+#### Key Aspects to improve performance:
+- Streaming: The code uses db.QueryContext to fetch records in a streaming manner. This prevents loading all records into memory at once.
+Memory Management: Since rows are processed one by one, memory usage remains low, even when handling a large number of records.
+Cache Scanning: to improve performance: based on gorm tag, cache column structure when scanning the GO row into an appropriate GO struct.
+Cache Transforming: to improve performance, cache CSV or fixed-length format structure when transforming a GO struct into CSV format or fixed-length for
+
+#### Samples:
 - [go-sql-export](https://github.com/project-samples/go-sql-export): export data from sql to fix-length or csv file.
 - [go-hive-export](https://github.com/project-samples/go-hive-export): export data from hive to fix-length or csv file.
 - [go-cassandra-export](https://github.com/project-samples/go-cassandra-export): export data from cassandra to fix-length or csv file.
 - [go-mongo-export](https://github.com/project-samples/go-mongo-export): export data from mongo to fix-length or csv file.
 - [go-firestore-export](https://github.com/project-samples/go-firestore-export): export data from firestore to fix-length or csv file.
 
-#### Import from file to database
+### Import from file to database
 
   ![Import from file to database](https://cdn-images-1.medium.com/max/800/1*rYaIdKGSd0HwZqZW7pMEiQ.png)
  
@@ -45,7 +89,7 @@ Extract-Transform-Load (ETL) is a data integration process involving the extract
 
     ![Import flow with data validation](https://cdn-images-1.medium.com/max/800/1*Y4QUN6QnfmJgaKigcNHbQA.png)
 
-##### Samples:
+#### Samples:
 - [go-sql-import](https://github.com/project-samples/go-sql-import): import data from fix-length or csv file to sql.
 - [go-hive-import](https://github.com/project-samples/go-hive-import): import data from fix-length or csv file to hive.
 - [go-cassandra-export](https://github.com/project-samples/go-cassandra-import): import data from fix-length or csv file to cassandra.
