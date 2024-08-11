@@ -32,7 +32,7 @@ Extract-Transform-Load (ETL) is a data integration process involving the extract
 
 #### Common Mistakes
 - <b>Inefficient Writing to I/O</b>: Large writing to I/O can slow down performance. Writing each record immediately without buffering is inefficient due to the high overhead of repeated I/O operations.
-  - <b>Solution</b>: Use bufio.Writer for more efficient writing.
+  - <b>Solution</b>: Use "<b>bufio.Writer</b>" for more efficient writing.
 - <b>Loading All Data Into Memory</b>: Fetching all records at once can consume a lot of memory, causing the program to slow down or crash. Use streaming with cursors instead.
   - <b>Solution</b>: Loop on each cursor. On each cursor, use bufio.Writer to write to database
 - <b>Inefficient Query</b>: Full scan the table. Do not filter on the index.
@@ -66,13 +66,13 @@ Transform a GO struct to a string (CSV or fixed-length format). We created 2 pro
 To improve performance, we cache the struct of CSV or Fixed Length Format.
 
 #### File Writer
-It is a wrapper of bufio.Writer to buffer writes to the file. This reduces the number of I/O operations.
+- It is a wrapper of "<b>bufio.Writer</b>" to buffer writes to the file. This reduces the number of I/O operations.
 
 #### Key Aspects to improve performance:
-- Streaming: The code uses db.QueryContext to fetch records in a streaming manner. This prevents loading all records into memory at once.
-Memory Management: Since rows are processed one by one, memory usage remains low, even when handling a large number of records.
-Cache Scanning: to improve performance: based on gorm tag, cache column structure when scanning the GO row into an appropriate GO struct.
-Cache Transforming: to improve performance, cache CSV or fixed-length format structure when transforming a GO struct into CSV format or fixed-length for
+- <b>Streaming</b>: The code uses db.QueryContext to fetch records in a streaming manner. This prevents loading all records into memory at once.
+- <b>Memory Management</b>: Since rows are processed one by one, memory usage remains low, even when handling a large number of records.
+- <b>Cache Scanning</b>: to improve performance: based on gorm tag, cache column structure when scanning the GO row into an appropriate GO struct.
+- <b>Cache Transforming</b>: to improve performance, cache CSV or fixed-length format structure when transforming a GO struct into CSV format or fixed-length for
 
 #### Samples:
 - [go-sql-export](https://github.com/project-samples/go-sql-export): export data from sql to fix-length or csv file.
