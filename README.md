@@ -4,8 +4,7 @@
 - File Stream Reader
 - Implement ETL process for Data Processing, Business Intelligence
 
-
-- You can refer to [ETL Tool Programming vs Traditional Programming](https://www.linkedin.com/pulse/etl-tool-programming-vs-traditional-duc-nguyen-jb2gc) and [Data Processing](https://www.linkedin.com/pulse/data-processing-golang-nodejs-duc-nguyen-wv33c) at my [Linked In](https://vn.linkedin.com/in/duc-nguyen-437240239?trk=article-ssr-frontend-pulse_publisher-author-card) for more details.
+You can refer to [ETL Tool Programming vs Traditional Programming](https://www.linkedin.com/pulse/etl-tool-programming-vs-traditional-duc-nguyen-jb2gc) and [Data Processing](https://www.linkedin.com/pulse/data-processing-golang-nodejs-duc-nguyen-wv33c) at my [Linked In](https://vn.linkedin.com/in/duc-nguyen-437240239?trk=article-ssr-frontend-pulse_publisher-author-card) for more details.
 
 ## ETL (Extract-Transform-Load)
 Extract-Transform-Load (ETL) is a data integration process involving the extraction of data from various sources, transformation into a suitable format, and loading into a target database or data warehouse.
@@ -72,7 +71,7 @@ To improve performance, we cache the struct of CSV or Fixed Length Format.
 - <b>Streaming</b>: The code uses db.QueryContext to fetch records in a streaming manner. This prevents loading all records into memory at once.
 - <b>Memory Management</b>: Since rows are processed one by one, memory usage remains low, even when handling a large number of records.
 - <b>Cache Scanning</b>: to improve performance: based on gorm tag, cache column structure when scanning the GO row into an appropriate GO struct.
-- <b>Cache Transforming</b>: to improve performance, cache CSV or fixed-length format structure when transforming a GO struct into CSV format or fixed-length for
+- <b>Cache Transforming</b>: to improve performance, cache CSV or fixed-length format structure when transforming a GO struct into CSV format or fixed-length format.
 
 #### Samples:
 - [go-sql-export](https://github.com/project-samples/go-sql-export): export data from sql to fix-length or csv file.
@@ -92,10 +91,10 @@ To improve performance, we cache the struct of CSV or Fixed Length Format.
 #### Samples:
 - [go-sql-import](https://github.com/project-samples/go-sql-import): import data from fix-length or csv file to sql.
 - [go-hive-import](https://github.com/project-samples/go-hive-import): import data from fix-length or csv file to hive.
-- [go-cassandra-export](https://github.com/project-samples/go-cassandra-import): import data from fix-length or csv file to cassandra.
+- [go-cassandra-import](https://github.com/project-samples/go-cassandra-import): import data from fix-length or csv file to cassandra.
 - [go-elasticsearch-import](https://github.com/project-samples/go-elasticsearch-import): import data from fix-length or csv file to elasticsearch.
-- [go-mongo-export](https://github.com/project-samples/go-mongo-import): import data from fix-length or csv file to mongo.
-- [go-firestore-export](https://github.com/project-samples/go-firestore-import): import data from fix-length or csv file to firestore.
+- [go-mongo-import](https://github.com/project-samples/go-mongo-import): import data from fix-length or csv file to mongo.
+- [go-firestore-import](https://github.com/project-samples/go-firestore-import): import data from fix-length or csv file to firestore.
 
 ##### Layer Architecture
 - Popular for web development
