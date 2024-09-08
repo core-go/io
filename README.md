@@ -37,6 +37,8 @@ Extract-Transform-Load (ETL) is a data integration process involving the extract
 - <b>Inefficient Query</b>: Full scan the table. Do not filter on the index.
   - Solution: If you export the whole table, you can scan the full table. If not, you need to filter on the index.
 
+#### Flow to export from SQL to files
+![Export from database to file](https://cdn-images-1.medium.com/max/800/1*IyQNowzP_4oGrWnmfJNvXA.png)
 #### Implementation
 #### Data Reader for SQL
 1. Build Query: For efficient query, you need to filter on the index, avoid to scan the full table. In my sample, I created index on field createdDate. In my 6 use cases, I use 4 use cases to filter on indexing field: createdDate.
@@ -82,7 +84,7 @@ To improve performance, we cache the struct of CSV or Fixed Length Format.
 
 ### Import from file to database
 
-  ![Import from file to database](https://cdn-images-1.medium.com/max/800/1*rYaIdKGSd0HwZqZW7pMEiQ.png)
+  ![Import from file to database](https://cdn-images-1.medium.com/max/800/1*beSBb7lebAy1odNrsM_Dgw.png)
  
   - Detailed flow to import from file to database
 
