@@ -88,7 +88,7 @@ To improve performance, we cache the struct of CSV or Fixed Length Format.
  
   - Detailed flow to import from file to database
 
-    ![Import flow with data validation](https://cdn-images-1.medium.com/max/800/1*u8HiUk2lAEdgc3PAm_svuA.png)
+    ![Import flow with data validation](https://cdn-images-1.medium.com/max/800/1*RK_Wzee40zyMBPKogtat7Q.png)
 
 #### Samples:
 - [go-sql-import](https://github.com/project-samples/go-sql-import): import data from fix-length or csv file to sql.
