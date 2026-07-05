@@ -55,7 +55,7 @@ func GetIndexesByTag(modelType reflect.Type, tagName string) (map[int]Delimiter,
 			if len(tagValue) > 0 {
 				if strings.Contains(tagValue, "dateFormat:") {
 					tagValue = strings.ReplaceAll(tagValue, "dateFormat:", "")
-				} else if sOk == false && strings.Contains(tagValue, "scale:") {
+				} else if !sOk && strings.Contains(tagValue, "scale:") {
 					tagValue = strings.ReplaceAll(tagValue, "scale:", "")
 					scale, err1 := strconv.Atoi(tagValue)
 					if err1 != nil {
@@ -85,13 +85,14 @@ func Min(n1 int, n2 int) int {
 }
 func ScanLine(lines []string, record interface{}, formatCols map[int]Delimiter) error {
 	s := reflect.Indirect(reflect.ValueOf(record))
-	numFields := s.NumField()
-	l := len(formatCols)
-	le := Min(numFields, l)
+	// numFields := s.NumField()
+	l1 := len(lines)
+	l2 := len(formatCols)
+	le := Min(l1, l2)
 	for i := 0; i < le; i++ {
 		line := lines[i]
 		f := s.Field(i)
-		if f.CanSet() {
+		if f.CanSet() && len(line) > 0 {
 			if format, ok := formatCols[i]; ok {
 				err := format.Handle(f, line, format.Format, format.Scale)
 				if err != nil {
